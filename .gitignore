@@ -1,0 +1,75 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+.pnpm/
+.yarn/
+.yarn-cache/
+
+# =========================
+# Build Output
+# =========================
+dist/
+.build/
+.out/
+.astro/
+coverage/
+
+# =========================
+# Logs
+# =========================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# =========================
+# Environment Files
+# =========================
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# =========================
+# OS Generated
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
+.dockerignore
+
+# =========================
+# DevContainer
+# =========================
+.devcontainer/.cache/
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
