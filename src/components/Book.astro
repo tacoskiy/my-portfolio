@@ -1,0 +1,895 @@
+---
+// Determine how many page slots the user provided dynamically.
+// We expect slots named "page-1", "page-2", "page-3"...
+const slotNames = Object.keys(Astro.slots).filter(name => name.startsWith('page-'));
+const totalUserPages = slotNames.length;
+
+// Convert into strict "physical leaves" (Sheets of paper)
+// Each leaf has a 'front' face and a 'back' face.
+const leaves = [];
+
+// Front Cover Leaf (Leaf 0)
+// Front: The outside cover
+// Back: The inside of the front cover (blank endpaper)
+leaves.push({
+  isCover: true,
+  front: Astro.slots.has('cover-front') ? { type: 'slot', name: 'cover-front' } : { type: 'cover', title: 'Portfolio' },
+  back: Astro.slots.has('cover-inside') ? { type: 'slot', name: 'cover-inside' } : { type: 'blank' }
+});
+
+// Content Pages (1-indexed based on the slot names)
+for (let i = 1; i <= totalUserPages; i += 2) {
+  leaves.push({
+    isCover: false,
+    front: Astro.slots.has(`page-${i}`) ? { type: 'slot', name: `page-${i}` } : { type: 'blank' },
+    back: Astro.slots.has(`page-${i+1}`) ? { type: 'slot', name: `page-${i+1}` } : { type: 'blank' }
+  });
+}
+
+// Back Cover Leaf
+// Front: The inside of the back cover (blank)
+// Back: The outside of the back cover ("Fin")
+leaves.push({
+  isCover: true,
+  front: { type: 'blank' },
+  back: Astro.slots.has('cover-back') ? { type: 'slot', name: 'cover-back' } : { type: 'backCover', title: 'Fin' }
+});
+
+const totalLeaves = leaves.length;
+---
+
+<div class="scene" id="main-scene">
+  <div class="bg-loading-indicator" id="bg-loader">
+    <span class="pulse-text">LOADING<span class="dots"></span></span>
+  </div>
+  <!-- Dynamic Noise Filter for Paper Texture -->
+  <svg style="position: absolute; width: 0; height: 0;">
+    <filter id="paper-noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0" />
+      <feComposite operator="in" in2="SourceGraphic" />
+    </filter>
+  </svg>
+
+  <div id="book-object-tilt" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform-style: preserve-3d; pointer-events: none; will-change: transform;">
+    <div class="book-entrance-wrapper">
+      <div class="book" id="book" style="pointer-events: none;">
+      <!-- Center spine visual binding -->
+      <div class="binding"></div>
+    
+    {leaves.map((leaf, index) => {
+      // Classic Z-Index Structure:
+      // Initially, all leaves are on the right. 
+      // Leaf 0 needs the highest Z-index so it's on top.
+      const rawZ = totalLeaves - index;
+      return (
+        <div 
+          class={`leaf ${leaf.isCover ? 'is-hardcover' : ''}`}
+          data-index={index}
+          data-z-right={rawZ}
+          data-z-left={index}
+          style={`z-index: ${rawZ}; transform: rotateY(0deg) translateZ(${-index * 0.5}px);`}
+        >
+          {/* FRONT FACE (Visible when on the right side) */}
+          <div class="face front">
+            <div class="page-content">
+              {leaf.front.type === 'cover' && (
+                <div class="cover-design">
+                  <h1>{leaf.front.title}</h1>
+                  <p class="hint">Click to open</p>
+                </div>
+              )}
+              {leaf.front.type === 'slot' && (
+                <div class={`full-html ${leaf.isCover ? 'cover-html' : 'standard-page'}`} set:html={Astro.slots.render(leaf.front.name!)} />
+              )}
+              {leaf.front.type === 'blank' && (
+                <div class="blank-page"></div>
+              )}
+            </div>
+            <div class="shading"></div>
+          </div>
+          
+          {/* BACK FACE (Visible when flipped to the left side) */}
+          <div class="face back">
+            <div class="page-content">
+              {leaf.back.type === 'backCover' && (
+                <div class="cover-design back-cover-design">
+                  <h1>{leaf.back.title}</h1>
+                  <p class="hint">The End</p>
+                </div>
+              )}
+              {leaf.back.type === 'slot' && (
+                <div class={`full-html ${leaf.isCover ? 'cover-html' : 'standard-page'}`} set:html={Astro.slots.render(leaf.back.name!)} />
+              )}
+              {leaf.back.type === 'blank' && (
+                <div class="blank-page"></div>
+              )}
+            </div>
+            <div class="shading"></div>
+          </div>
+        </div>
+      );
+    })}
+    </div>
+    </div>
+  </div>
+  
+  <div class="controls" id="controls">
+    <button id="btn-prev" aria-label="Previous Page" class="nav-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button id="btn-next" aria-label="Next Page" class="nav-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+</div>
+
+<style>
+/* 
+  CLASSIC CSS 3D BOOK STRUCTURE
+  - No dynamic `translateZ` physics or parallax offsets.
+  - The book is absolutely stationary. 
+  - The spine is permanently anchored to the exact center.
+  - Leaves pivot -180deg exactly around the spine.
+*/
+:root {
+  --leaf-duration: 0.9s;
+  --bg-dark: #0a0a0b;
+  --bg-accent: #1a1a1a;
+  --cover-bg: #1e1e1e;
+  --cover-text: #ffffff;
+  --page-bg: #fdfaf5; /* Warm eggshell white */
+  --text-main: #111111;
+  --text-muted: #555555;
+}
+
+.scene {
+  background: var(--bg-dark);
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 2500px;
+  overflow: hidden;
+  font-family: 'Noto Sans JP', 'Inter', sans-serif;
+}
+
+/* Atmospheric Mesh Gradient */
+.scene::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: 
+    radial-gradient(circle at 20% 30%, var(--bg-accent) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, #222222 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, #151515 0%, transparent 60%);
+  filter: blur(80px);
+  opacity: 0.6;
+  animation: mesh-drift 20s infinite alternate ease-in-out;
+  z-index: -1;
+}
+
+/* 3D Floor Shadow/Reflection */
+.scene::after {
+  content: '';
+  position: absolute;
+  width: 120%;
+  height: 40%;
+  bottom: -10%;
+  left: -10%;
+  background: radial-gradient(ellipse at center, rgba(30, 15, 0, 0.6) 0%, transparent 70%);
+  transform: rotateX(80deg);
+  filter: blur(25px);
+  z-index: -1;
+  /* We only animate when the scene is loaded so the book and shadow stay hidden beforehand */
+  opacity: 0;
+}
+
+/* Animations apply ONLY after loading finishes */
+.scene.is-loaded::after {
+  animation: shadow-entrance-sequence 2s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes shadow-entrance-sequence {
+  0% {
+    opacity: 0;
+    transform: rotateX(80deg) scale(0.3) translateY(-100px);
+    filter: blur(40px);
+    background: radial-gradient(ellipse at center, rgba(10, 5, 0, 0.9) 0%, transparent 60%);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(80deg) scale(1) translateY(0);
+    filter: blur(25px);
+    background: radial-gradient(ellipse at center, rgba(30, 15, 0, 0.6) 0%, transparent 70%);
+  }
+}
+
+@keyframes mesh-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(5%, 5%) scale(1.1); }
+}
+
+.book-entrance-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  /* Start hidden & offscreen */
+  transform: translateY(120vh) translateZ(100px) rotateX(20deg) scale(1.05); 
+}
+
+.scene.is-loaded .book-entrance-wrapper {
+  animation: book-entrance-sequence 2s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes book-entrance-sequence {
+  0% { 
+    /* Starts deep off-screen gently */
+    transform: translateY(120vh) translateZ(100px) rotateX(20deg) scale(1.05); 
+  }
+  100% { 
+    /* Final suspended floating state */
+    transform: translateY(0) translateZ(0) rotateX(0deg) scale(1); 
+  }
+}
+
+.bg-loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--cover-text);
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem; /* Increased size */
+  font-weight: 600; /* Bolder */
+  letter-spacing: 0.4em;
+  z-index: -2; /* Completely behind the 3D book shadow floor */
+  opacity: 0.9; /* Increased baseline opacity */
+}
+
+.bg-loading-indicator .pulse-text {
+  animation: load-pulse 1.5s infinite alternate ease-in-out;
+  display: inline-block;
+}
+
+@keyframes load-pulse {
+  0% { opacity: 0.5; filter: blur(1px); }
+  100% { opacity: 1; filter: blur(0px); }
+}
+
+.bg-loading-indicator .dots::after {
+  content: '';
+  animation: loading-dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes loading-dots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}
+
+/* Gracefully fade out the loader once the book is fully in position */
+.scene.is-loaded .bg-loading-indicator {
+  animation: fade-out 1s linear 2s forwards;
+}
+
+@keyframes fade-out {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; pointer-events: none; }
+}
+
+.book {
+  position: relative;
+  /* Width defines the FULL two-page spread */
+  width: calc(100vw - 72px);
+  max-width: none;
+  height: calc(100vh - 72px);
+  max-height: none;
+  transform-style: preserve-3d;
+  /* Start centered on the front cover by offsetting the full spread half-width */
+  transform: translateX(-25%);
+  transition: transform var(--leaf-duration) cubic-bezier(0.5, 0.0, 0.2, 1);
+}
+
+/* The 3D rounded binding (Spine) */
+.binding {
+  position: absolute;
+  top: -8.5px; left: 50%; bottom: -8.5px;
+  width: 22px; /* Refined width */
+  transform: translateX(-50%) translateZ(-8px) rotateY(0deg);
+  background: var(--cover-bg);
+  background-image: linear-gradient(to right, 
+    rgba(0,0,0,0.6) 0%, 
+    rgba(255,255,255,0.05) 50%, 
+    rgba(0,0,0,0.6) 100%
+  );
+  z-index: -10;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.4);
+  border-radius: 11px; /* Half of width */
+  transform-style: preserve-3d;
+}
+
+/* Spine Side Faces for Volume */
+.binding::before, .binding::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; width: 8px;
+  background: #000;
+}
+.binding::before {
+  left: 0; transform: rotateY(-90deg) translateX(-4px); transform-origin: left;
+}
+.binding::after {
+  right: 0; transform: rotateY(90deg) translateX(4px); transform-origin: right;
+  /* Removal of semi-transparency */
+}
+
+/* 
+  Leaves are exactly 50% width, placed on the RIGHT side.
+  Transform origin is the LEFT edge (which sits perfectly at 50% screen center).
+*/
+.leaf {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform var(--leaf-duration) cubic-bezier(0.5, 0.0, 0.2, 1);
+  /* z-index is handled by style injections initially, and JS during interactions */
+}
+
+/* Hardware accelerate the flipping */
+.leaf.is-flipping {
+  will-change: transform;
+}
+
+.face {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  backface-visibility: hidden; /* Hides rear geometry when rotated */
+  background-color: var(--page-bg);
+  box-sizing: border-box;
+  overflow: clip; /* Use 'clip' instead of 'hidden' — does NOT create a new stacking context in 3D, so children remain hittable */
+  pointer-events: auto; /* Re-enable events on the actual page surfaces (book container is none) */
+  /* Paper Grain + Subtle Depth Gradient */
+  background-image: 
+    linear-gradient(to bottom, rgba(0,0,0,0.02), transparent 10%, transparent 90%, rgba(0,0,0,0.02)),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-blend-mode: multiply;
+  opacity: 0.99;
+  box-shadow: inset 0 0 25px rgba(0,0,0,0.05);
+  transform-style: preserve-3d;
+}
+
+/* Page Stack Visual Edge (Multi-shadow for thickness) */
+.face.front {
+  transform: rotateY(0deg);
+  border-radius: 0 4px 4px 0;
+  border-left: 1px solid rgba(0,0,0,0.04);
+  /* Simulated thickness via shadows */
+  box-shadow: 
+    inset 0 0 25px rgba(0,0,0,0.05),
+    1px 0 0 #e5e0d8,
+    2px 0 0 #d9d4cc,
+    3px 0 5px rgba(0,0,0,0.1);
+}
+
+.face.back {
+  transform: rotateY(180deg);
+  background-color: var(--page-bg); 
+  border-radius: 4px 0 0 4px;
+  border-right: 1px solid rgba(0,0,0,0.04);
+  /* Simulated thickness via shadows */
+  box-shadow: 
+    inset 0 0 25px rgba(0,0,0,0.05),
+    -1px 0 0 #e5e0d8,
+    -2px 0 0 #d9d4cc,
+    -3px 0 5px rgba(0,0,0,0.1);
+}
+
+/* Spine Crease Visual (Ambient Occlusion at the fold) */
+.face.front::before, .face.back::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 30px;
+  z-index: 5;
+  pointer-events: none;
+}
+.face.front::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+}
+.face.back::before {
+  right: 0;
+  background: linear-gradient(to left, rgba(0,0,0,0.1), transparent);
+}
+
+/* Hardcover Specifics */
+/* Overhang: Make the hardcover slightly larger than the inner pages */
+.leaf.is-hardcover {
+  /* Give covers a thicker feel via drop shadow */
+  box-shadow: 5px 10px 20px rgba(0,0,0,0.15);
+  /* The leaf container dictates the hinge. We enlarge the faces rather than the leaf itself 
+     so the hinge (left: 0) remains perfectly aligned with the spine. */
+}
+
+.leaf.is-hardcover .face {
+  /* Expand top, bottom, and right edge (but keep left edge anchored at the spine) */
+  top: -8px; 
+  bottom: -8px;
+  height: calc(100% + 16px);
+  width: calc(100% + 10px);
+  transform-style: preserve-3d;
+}
+
+.leaf.is-hardcover .face.front {
+  background-color: var(--cover-bg);
+  background-image: 
+    url("/textures/book-tex.svg"),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 100%, auto;
+  background-blend-mode: overlay, multiply;
+  border-radius: 2px 8px 8px 2px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transform: rotateY(0deg);
+  /* Thicker cover shadow */
+  box-shadow: 
+    inset 0 0 40px rgba(0,0,0,0.2),
+    1px 0 0 #111,
+    2px 0 0 #000,
+    4px 0 10px rgba(0,0,0,0.3);
+}
+.leaf.is-hardcover .face.back {
+  background-color: var(--cover-bg); /* inside lining */
+  background-image: 
+    url("/textures/book-tex.svg"),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 100%, auto;
+  background-blend-mode: overlay, multiply;
+  border-radius: 8px 2px 2px 8px;
+  transform: rotateY(180deg);
+  box-shadow: 
+    inset 0 0 40px rgba(0,0,0,0.2),
+    -1px 0 0 #111,
+    -2px 0 0 #000,
+    -4px 0 10px rgba(0,0,0,0.3);
+}
+
+.face.front::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0; width: 40px;
+  background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+  pointer-events: none;
+}
+
+.face.back::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; width: 40px;
+  background: linear-gradient(to left, rgba(0,0,0,0.1), transparent);
+  pointer-events: none;
+}
+
+/* Realistic Shadow Gradients for flight */
+.shading {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  background: rgba(0,0,0,0.12);
+  opacity: 0; 
+  transition: opacity 0.4s ease;
+  will-change: opacity;
+}
+
+/* When the page is actively flipping, mid-air shadows appear deeply */
+.leaf.is-flipping .shading {
+  opacity: 1;
+}
+
+/* Content Layouts */
+.page-content {
+  width: 100%; height: 100%;
+  padding: 6vw;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+  /* No translateZ — stay in the same plane as .face so overflow: clip doesn't exclude us from hit-testing */
+}
+
+.leaf.is-hardcover .page-content {
+  padding: 0;
+}
+
+.cover-design {
+  text-align: center;
+  color: var(--cover-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.cover-design h1 {
+  font-size: 2.8rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+.hint {
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  animation: pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* By default, slots will take up full height so user formatting dictates the layout */
+.full-html {
+  height: 100%;
+  width: 100%;
+}
+
+.cover-html :global(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.standard-page :global(h2) {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-main);
+  letter-spacing: 0.05em;
+}
+
+.standard-page :global(p) {
+  font-size: 1.05rem;
+  line-height: 2;
+  color: var(--text-muted);
+  max-width: 60ch;
+  text-align: justify;
+}
+
+.standard-page :global(.page-image), 
+.standard-page :global(img) {
+  max-width: 100%;
+  max-height: 50vh;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  margin-top: 1.5rem;
+}
+
+/* User Extensible Components */
+.standard-page :global(.status-tag) {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #ffe3e3;
+  color: #d12020;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.standard-page :global(.status-tag.done) {
+  background: #e3ffe3;
+  color: #20d120;
+}
+
+.standard-page :global(.status-tag.in-progress) {
+  background: #e3f0ff;
+  color: #206bd1;
+}
+
+.standard-page :global(a.link-tag) {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: #f4f6f8;
+  color: #333;
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  border: 1px solid #e1e4e8;
+  margin: 0 4px 1rem 0;
+  transition: all 0.2s ease;
+}
+
+.standard-page :global(a.link-tag:hover) {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.standard-page :global(a.link-tag:active) {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.standard-page :global(.pdf-attachment) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f4f6f8;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  color: #333;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  margin-top: 1.5rem;
+}
+
+.standard-page :global(.pdf-attachment:hover) {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.standard-page :global(.pdf-attachment:active) {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.standard-page :global(.pdf-attachment svg) {
+  width: 18px;
+  height: 18px;
+}
+
+/* Nav Controls */
+.controls {
+  position: fixed; /* Escape the 3D context */
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none; /* Let clicks pass through to book */
+  padding: 0 40px; /* Pull buttons inside the screen edge slightly */
+  z-index: 20000; /* Must sit above the 9999 z-index of the actively flipping leaf */
+}
+
+.nav-btn {
+  pointer-events: auto;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s, border 0.2s, color 0.3s;
+  /* Remove negative margin so buttons stay inside padding area */
+  margin: 0; 
+}
+
+.nav-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transform: scale(1);
+  box-shadow: none;
+}
+</style>
+
+<script>
+// --- [Loading Sequence Orchestration] ---
+// We wait until exactly everything (fonts, high-res images) finishes loading.
+window.addEventListener('load', () => {
+  const scene = document.getElementById('main-scene');
+  
+  // Optional: Add a guaranteed 600ms minimum wait to ensure the elegant loader is appreciated even on fast connections
+  const timeSinceNavStart = performance.now();
+  const minWaitTime = 600;
+  const waitLeft = Math.max(0, minWaitTime - timeSinceNavStart);
+  
+  setTimeout(() => {
+    scene?.classList.add('is-loaded');
+  }, waitLeft);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const leaves = Array.from(document.querySelectorAll('.leaf')) as HTMLElement[];
+  const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
+  const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
+  const controls = document.getElementById('controls') as HTMLElement;
+  const book = document.getElementById('book') as HTMLElement;
+  
+  if (!leaves.length) return;
+
+  const totalLeaves = leaves.length;
+  let currentLeaf = 0; // Represents the left-most leaf on the right stack
+  let isAnimating = false;
+
+  function updateBookPosition() {
+    if (currentLeaf === 0) {
+      // Show exactly the Front Cover in the dead center
+      book.style.transform = 'translateX(-25%)';
+      book.dataset.openStatus = 'closed-front';
+    } else if (currentLeaf === totalLeaves) {
+      // Show exactly the Back Cover in the dead center
+      book.style.transform = 'translateX(25%)';
+      book.dataset.openStatus = 'closed-back';
+    } else {
+      // Fully wide open 2-page spread
+      book.style.transform = 'translateX(0%)';
+      book.dataset.openStatus = 'open';
+    }
+  }
+
+  function updateButtons() {
+    btnPrev.disabled = currentLeaf === 0;
+    btnNext.disabled = currentLeaf === totalLeaves;
+
+    // Dynamically adjust icon color based on what is behind the buttons
+    let prevColor = 'white';
+    let nextColor = 'white';
+
+    if (currentLeaf > 0 && currentLeaf < totalLeaves) {
+      // Book is open. Buttons are hovering over the left and right pages.
+      const leftLeaf = leaves[currentLeaf - 1];
+      const rightLeaf = leaves[currentLeaf];
+
+      // Hardcovers use dark background, standard pages use light background
+      prevColor = leftLeaf.classList.contains('is-hardcover') ? 'white' : '#111';
+      nextColor = rightLeaf.classList.contains('is-hardcover') ? 'white' : '#111';
+    }
+
+    btnPrev.style.color = prevColor;
+    btnNext.style.color = nextColor;
+  }
+
+  function turnNext() {
+    if (isAnimating || currentLeaf >= totalLeaves) return;
+    isAnimating = true;
+    
+    const leaf = leaves[currentLeaf];
+    
+    // CRITICAL CLASSIC CSS FIX:
+    // To prevent clipping during the 3D flip, the turning leaf must have an absolute paramount Z-index.
+    leaf.style.zIndex = '9999';
+    leaf.classList.add('is-flipping');
+    
+    // Maintain stack offset during flip to avoid intersection with neighboring pages
+    const index = parseInt(leaf.getAttribute('data-index')!);
+    leaf.style.transform = `rotateY(-180deg) translateZ(${-index * 0.5}px)`;
+
+    currentLeaf++;
+    
+    // Animate the entire book block horizontally at the exact same moment
+    // using the exact same cubic-bezier curve so it stays perfectly centered.
+    updateBookPosition();
+    
+    setTimeout(() => {
+      // Upon completion, set the z-index to its mathematically correct left-stack depth.
+      leaf.style.zIndex = leaf.getAttribute('data-z-left')!;
+      // Final Z position on the left stack
+      leaf.style.transform = `rotateY(-180deg) translateZ(${-index * 0.5}px)`;
+      leaf.classList.remove('is-flipping');
+      isAnimating = false;
+      updateButtons();
+    }, 900); // Wait for transition entirely
+  }
+
+  function turnPrev() {
+    if (isAnimating || currentLeaf <= 0) return;
+    isAnimating = true;
+
+    currentLeaf--;
+    const leaf = leaves[currentLeaf];
+    
+    
+    leaf.style.zIndex = '9999';
+    leaf.classList.add('is-flipping');
+    leaf.style.transform = `rotateY(0deg) translateZ(${-currentLeaf * 0.5}px)`;
+
+    updateBookPosition();
+
+    setTimeout(() => {
+      // Re-assign natural right-stack depth
+      leaf.style.zIndex = leaf.getAttribute('data-z-right')!;
+      leaf.classList.remove('is-flipping');
+      isAnimating = false;
+      updateButtons();
+    }, 900);
+  }
+
+  // Click listeners for physical buttons
+  btnNext?.addEventListener('click', turnNext);
+  btnPrev?.addEventListener('click', turnPrev);
+  
+  // Book surface click handler — turns pages UNLESS clicking an interactive element
+  book.addEventListener('click', (e) => {
+    // If user clicked an interactive element (link, button, etc.), let the browser handle it natively
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest('a, button, [role="button"], input, textarea, select')) {
+      return; // Do nothing — browser follows the link / activates the button
+    }
+
+    // Ignore text selection drags
+    if (window.getSelection()?.toString().length) return;
+
+    // Determine left vs right half → turn page
+    const rect = book.getBoundingClientRect();
+    const isRightSide = e.clientX > rect.left + rect.width / 2;
+    if (isRightSide) turnNext();
+    else turnPrev();
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') turnNext();
+    if (e.key === 'ArrowLeft') turnPrev();
+  });
+
+  // Vertical Scroll (Wheel) navigation
+  // We use a small threshold and a cooldown to prevent aggressive trackpad rapid-firing.
+  let wheelTimeout: number | null = null;
+  document.addEventListener('wheel', (e) => {
+    // Only react to significant vertical scrolls, ignore horizontal swipes or tiny nudges
+    if (Math.abs(e.deltaY) > 20) {
+      if (wheelTimeout === null) {
+        if (e.deltaY > 0) {
+          turnNext();
+        } else {
+          turnPrev();
+        }
+        
+        // Cooldown period matching or slightly less than the animation duration
+        // to prevent stacking flipped pages rapidly.
+        wheelTimeout = window.setTimeout(() => {
+          wheelTimeout = null;
+        }, 900);
+      }
+    }
+  }, { passive: true }); // passive: true for smooth scrolling if we dont preventDefault
+
+  updateButtons();
+
+});
+</script>

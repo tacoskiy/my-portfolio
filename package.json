@@ -1,0 +1,21 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "astro dev --host",
+    "start": "astro dev --host",
+    "build": "astro check && astro build",
+    "preview": "astro preview --host",
+    "astro": "astro"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.13",
+    "astro": "^5.18.0",
+    "typescript": "^5.9.3"
+  }
+}
