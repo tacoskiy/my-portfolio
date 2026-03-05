@@ -1,4 +1,8 @@
 ---
+export interface Props {
+  chapters?: { leaf: number, title: string }[];
+}
+
 // Determine how many page slots the user provided dynamically.
 // We expect slots named "page-1", "page-2", "page-3"...
 const slotNames = Object.keys(Astro.slots).filter(name => name.startsWith('page-'));
@@ -36,6 +40,7 @@ leaves.push({
 });
 
 const totalLeaves = leaves.length;
+const { chapters = [] } = Astro.props as Props;
 ---
 
 <div class="scene" id="main-scene">
@@ -72,6 +77,7 @@ const totalLeaves = leaves.length;
         >
           {/* FRONT FACE (Visible when on the right side) */}
           <div class="face front">
+            {leaf.isCover && <div class="cover-texture-layer"></div>}
             <div class="page-content">
               {leaf.front.type === 'cover' && (
                 <div class="cover-design">
@@ -91,6 +97,7 @@ const totalLeaves = leaves.length;
           
           {/* BACK FACE (Visible when flipped to the left side) */}
           <div class="face back">
+            {leaf.isCover && <div class="cover-texture-layer"></div>}
             <div class="page-content">
               {leaf.back.type === 'backCover' && (
                 <div class="cover-design back-cover-design">
@@ -122,6 +129,16 @@ const totalLeaves = leaves.length;
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
     </button>
   </div>
+
+  {chapters.length > 0 && (
+    <div class="chapter-nav">
+      {chapters.map((chap) => (
+        <button class="chapter-btn" data-target-leaf={chap.leaf}>{chap.title}</button>
+      ))}
+    </div>
+  )}
+
+  <div id="chapter-fade"></div>
 </div>
 
 <style>
@@ -137,10 +154,76 @@ const totalLeaves = leaves.length;
   --bg-dark: #0a0a0b;
   --bg-accent: #1a1a1a;
   --cover-bg: #1e1e1e;
+  --page-bg: #e3ddce;
+  --text-main: #111111;
+  --text-muted: #555555;
   --cover-text: #ffffff;
+  
+  /* ====== 本のカバーのテクスチャ透明度 ====== */
+  /* ここでテクスチャの濃さを自由に調整できます。
+     0.05（うっすら）〜 0.15（はっきり）程度がおすすめです。 */
+  --book-texture-opacity: 0.025;
+
   --page-bg: #fdfaf5; /* Warm eggshell white */
   --text-main: #111111;
   --text-muted: #555555;
+}
+
+.chapter-nav {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  z-index: 1000;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.scene.nav-hidden .chapter-nav {
+  opacity: 0;
+  pointer-events: none;
+}
+.chapter-btn {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.95);
+  padding: 0.6rem 1.25rem;
+  font-family: 'Inter', 'Noto Sans JP', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.chapter-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.chapter-btn.is-active {
+  background: #ffffff;
+  color: #111111;
+  border-color: #ffffff;
+}
+
+/* Chapter transition fade overlay */
+#chapter-fade {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0b;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 99999;
+}
+#chapter-fade.fade-in {
+  opacity: 1;
+  pointer-events: all;
 }
 
 .scene {
@@ -436,13 +519,8 @@ const totalLeaves = leaves.length;
 
 .leaf.is-hardcover .face.front {
   background-color: var(--cover-bg);
-  background-image: 
-    url("/textures/book-tex.svg"),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  background-size: 100%, auto;
-  background-blend-mode: overlay, multiply;
   border-radius: 2px 8px 8px 2px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08); /* Slightly more visible border */
   transform: rotateY(0deg);
   /* Thicker cover shadow */
   box-shadow: 
@@ -453,11 +531,6 @@ const totalLeaves = leaves.length;
 }
 .leaf.is-hardcover .face.back {
   background-color: var(--cover-bg); /* inside lining */
-  background-image: 
-    url("/textures/book-tex.svg"),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  background-size: 100%, auto;
-  background-blend-mode: overlay, multiply;
   border-radius: 8px 2px 2px 8px;
   transform: rotateY(180deg);
   box-shadow: 
@@ -465,6 +538,26 @@ const totalLeaves = leaves.length;
     -1px 0 0 #111,
     -2px 0 0 #000,
     -4px 0 10px rgba(0,0,0,0.3);
+}
+
+/* Texture Layer injected via Astro for covers */
+.cover-texture-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background-image: 
+    url("/textures/book-tex.svg"),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.8 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 100%, 150px 150px;
+  background-blend-mode: normal, multiply;
+  opacity: var(--book-texture-opacity);
+}
+
+.face.front .cover-texture-layer {
+  border-radius: 2px 8px 8px 2px;
+}
+.face.back .cover-texture-layer {
+  border-radius: 8px 2px 2px 8px;
 }
 
 .face.front::after {
@@ -501,21 +594,59 @@ const totalLeaves = leaves.length;
 
 /* Content Layouts */
 .page-content {
-  width: 100%; height: 100%;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   padding: 6vw;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  position: relative;
-  z-index: 5;
+  overflow-y: auto;
+  overflow-x: hidden;
   pointer-events: auto;
-  /* No translateZ — stay in the same plane as .face so overflow: clip doesn't exclude us from hit-testing */
+  z-index: 5;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.leaf.is-hardcover .page-content {
-  padding: 0;
+.page-content::-webkit-scrollbar {
+  display: none;
 }
+
+/* Hardcovers: no internal scrolling */
+.leaf.is-hardcover .page-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+
+/* Scroll-fade edges: always show bottom hint on scrollable pages.
+   CSS mask is the only reliable technique inside overflow:clip / 3D transforms.
+   Default: mask bottom edge. JS adds classes to disable when at boundary. */
+.page-content:not(.not-scrollable) {
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 82%, transparent 100%);
+}
+
+/* At the very bottom: the content ends, no need for bottom fade */
+.page-content.at-bottom {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* Scrolled partway down: show both top and bottom fades */
+.page-content.show-top:not(.at-bottom) {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 82%, transparent 100%);
+}
+
+/* Hardcovers: no mask */
+.leaf.is-hardcover .page-content {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+
 
 .cover-design {
   text-align: center;
@@ -546,9 +677,14 @@ const totalLeaves = leaves.length;
   50% { opacity: 0.8; }
 }
 
-/* By default, slots will take up full height so user formatting dictates the layout */
-.full-html {
+/* Cover pages need full height to fill the face */
+.cover-html {
   height: 100%;
+  width: 100%;
+}
+
+/* Standard pages: block flow so overflow is based on content, not flex sizing */
+.standard-page {
   width: 100%;
 }
 
@@ -671,30 +807,37 @@ const totalLeaves = leaves.length;
 
 /* Nav Controls */
 .controls {
-  position: fixed; /* Escape the 3D context */
+  position: fixed;
   top: 50%;
   left: 0;
   right: 0;
   transform: translateY(-50%);
   display: flex;
   justify-content: space-between;
-  pointer-events: none; /* Let clicks pass through to book */
-  padding: 0 40px; /* Pull buttons inside the screen edge slightly */
-  z-index: 20000; /* Must sit above the 9999 z-index of the actively flipping leaf */
+  pointer-events: none;
+  padding: 0 40px;
+  z-index: 20000;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.scene.nav-hidden .controls {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .nav-btn {
   pointer-events: auto;
   width: 60px; height: 60px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  color: white;
+  color: rgba(255, 255, 255, 0.95);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s, border 0.2s, color 0.3s;
   /* Remove negative margin so buttons stay inside padding area */
   margin: 0; 
@@ -702,9 +845,10 @@ const totalLeaves = leaves.length;
 
 .nav-btn:hover:not(:disabled) {
   transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  color: white;
 }
 
 .nav-btn:disabled {
@@ -745,18 +889,54 @@ document.addEventListener('DOMContentLoaded', () => {
   const totalLeaves = leaves.length;
   let currentLeaf = 0; // Represents the left-most leaf on the right stack
   let isAnimating = false;
+  let animTimeout: number | undefined;
+
+  // --- Mouse Idle: hide nav after 2.5s of no movement ---
+  const scene = document.getElementById('main-scene')!;
+  let idleTimer: number | undefined;
+
+  function showNav() {
+    scene.classList.remove('nav-hidden');
+    clearTimeout(idleTimer);
+    idleTimer = window.setTimeout(() => {
+      scene.classList.add('nav-hidden');
+    }, 1000);
+  }
+
+  document.addEventListener('mousemove', showNav, { passive: true });
+  // Also show on click/keypress so keyboard nav reveals buttons
+  document.addEventListener('keydown', showNav, { passive: true });
+  showNav(); // start the initial timer
+
+  // --- Scroll Fade Indicators (CSS mask-based) ---
+  function setupScrollFades() {
+    document.querySelectorAll('.leaf:not(.is-hardcover) .page-content').forEach(el => {
+      const pc = el as HTMLElement;
+
+      function updateFade() {
+        const isScrollable = pc.scrollHeight > pc.clientHeight + 4;
+        pc.classList.toggle('not-scrollable', !isScrollable);
+        pc.classList.toggle('at-bottom', isScrollable && pc.scrollTop + pc.clientHeight >= pc.scrollHeight - 4);
+        pc.classList.toggle('show-top', isScrollable && pc.scrollTop > 4);
+      }
+
+      pc.addEventListener('scroll', updateFade, { passive: true });
+      new ResizeObserver(updateFade).observe(pc);
+      // Delay first check so layout is complete
+      requestAnimationFrame(() => requestAnimationFrame(updateFade));
+    });
+  }
+
+  setupScrollFades();
 
   function updateBookPosition() {
     if (currentLeaf === 0) {
-      // Show exactly the Front Cover in the dead center
       book.style.transform = 'translateX(-25%)';
       book.dataset.openStatus = 'closed-front';
     } else if (currentLeaf === totalLeaves) {
-      // Show exactly the Back Cover in the dead center
       book.style.transform = 'translateX(25%)';
       book.dataset.openStatus = 'closed-back';
     } else {
-      // Fully wide open 2-page spread
       book.style.transform = 'translateX(0%)';
       book.dataset.openStatus = 'open';
     }
@@ -766,33 +946,25 @@ document.addEventListener('DOMContentLoaded', () => {
     btnPrev.disabled = currentLeaf === 0;
     btnNext.disabled = currentLeaf === totalLeaves;
 
-    // Dynamically adjust icon color based on what is behind the buttons
-    let prevColor = 'white';
-    let nextColor = 'white';
-
-    if (currentLeaf > 0 && currentLeaf < totalLeaves) {
-      // Book is open. Buttons are hovering over the left and right pages.
-      const leftLeaf = leaves[currentLeaf - 1];
-      const rightLeaf = leaves[currentLeaf];
-
-      // Hardcovers use dark background, standard pages use light background
-      prevColor = leftLeaf.classList.contains('is-hardcover') ? 'white' : '#111';
-      nextColor = rightLeaf.classList.contains('is-hardcover') ? 'white' : '#111';
-    }
-
-    btnPrev.style.color = prevColor;
-    btnNext.style.color = nextColor;
+    // Update chapter buttons
+    document.querySelectorAll('.chapter-btn').forEach(btn => {
+      const target = parseInt(btn.getAttribute('data-target-leaf')!);
+      if (target === currentLeaf) {
+        btn.classList.add('is-active');
+      } else {
+        btn.classList.remove('is-active');
+      }
+    });
   }
 
   function turnNext() {
-    if (isAnimating || currentLeaf >= totalLeaves) return;
+    if (currentLeaf >= totalLeaves || isAnimating) return;
     isAnimating = true;
     
     const leaf = leaves[currentLeaf];
     
-    // CRITICAL CLASSIC CSS FIX:
-    // To prevent clipping during the 3D flip, the turning leaf must have an absolute paramount Z-index.
-    leaf.style.zIndex = '9999';
+    // To prevent clipping during rapid 3D flips, we use an ascending z-index based on flip order
+    leaf.style.zIndex = (10000 - currentLeaf).toString();
     leaf.classList.add('is-flipping');
     
     // Maintain stack offset during flip to avoid intersection with neighboring pages
@@ -804,40 +976,102 @@ document.addEventListener('DOMContentLoaded', () => {
     // Animate the entire book block horizontally at the exact same moment
     // using the exact same cubic-bezier curve so it stays perfectly centered.
     updateBookPosition();
+    updateButtons();
     
-    setTimeout(() => {
+    clearTimeout(animTimeout);
+    animTimeout = setTimeout(() => {
       // Upon completion, set the z-index to its mathematically correct left-stack depth.
       leaf.style.zIndex = leaf.getAttribute('data-z-left')!;
-      // Final Z position on the left stack
-      leaf.style.transform = `rotateY(-180deg) translateZ(${-index * 0.5}px)`;
       leaf.classList.remove('is-flipping');
       isAnimating = false;
-      updateButtons();
     }, 900); // Wait for transition entirely
   }
 
   function turnPrev() {
-    if (isAnimating || currentLeaf <= 0) return;
+    if (currentLeaf <= 0 || isAnimating) return;
     isAnimating = true;
 
     currentLeaf--;
     const leaf = leaves[currentLeaf];
     
-    
-    leaf.style.zIndex = '9999';
+    leaf.style.zIndex = (10000 + currentLeaf).toString();
     leaf.classList.add('is-flipping');
     leaf.style.transform = `rotateY(0deg) translateZ(${-currentLeaf * 0.5}px)`;
 
     updateBookPosition();
+    updateButtons();
 
-    setTimeout(() => {
+    clearTimeout(animTimeout);
+    animTimeout = setTimeout(() => {
       // Re-assign natural right-stack depth
       leaf.style.zIndex = leaf.getAttribute('data-z-right')!;
       leaf.classList.remove('is-flipping');
       isAnimating = false;
-      updateButtons();
     }, 900);
   }
+
+  // Animated chapter jumping: fade out, snap all pages, fade back in
+  function jumpToLeaf(target: number) {
+    if (target === currentLeaf || isAnimating) return;
+    isAnimating = true;
+
+    const fadeEl = document.getElementById('chapter-fade')!;
+    const isForward = target > currentLeaf;
+
+    // Step 1: Fade to black
+    fadeEl.classList.add('fade-in');
+
+    setTimeout(() => {
+      // Step 2: Instantly snap all pages while hidden
+      book.style.transition = 'none';
+      leaves.forEach(l => l.style.transition = 'none');
+
+      if (isForward) {
+        for (let i = currentLeaf; i < target; i++) {
+          const leaf = leaves[i];
+          leaf.style.zIndex = leaf.getAttribute('data-z-left')!;
+          const index = parseInt(leaf.getAttribute('data-index')!);
+          leaf.style.transform = `rotateY(-180deg) translateZ(${-index * 0.5}px)`;
+          leaf.classList.remove('is-flipping');
+        }
+      } else {
+        for (let i = currentLeaf - 1; i >= target; i--) {
+          const leaf = leaves[i];
+          leaf.style.zIndex = leaf.getAttribute('data-z-right')!;
+          leaf.style.transform = `rotateY(0deg) translateZ(${-i * 0.5}px)`;
+          leaf.classList.remove('is-flipping');
+        }
+      }
+
+      currentLeaf = target;
+      updateBookPosition();
+      updateButtons();
+
+      // Force reflow
+      book.offsetHeight;
+
+      // Restore transitions
+      book.style.transition = '';
+      leaves.forEach(l => l.style.transition = '');
+
+      // Step 3: Fade back in
+      fadeEl.classList.remove('fade-in');
+
+      clearTimeout(animTimeout);
+      animTimeout = setTimeout(() => {
+        isAnimating = false;
+      }, 300);
+
+    }, 300); // Wait for fade-out to finish
+  }
+
+  document.querySelectorAll('.chapter-btn, .page-link').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = parseInt(btn.getAttribute('data-target-leaf')!);
+      jumpToLeaf(target);
+    });
+  });
 
   // Click listeners for physical buttons
   btnNext?.addEventListener('click', turnNext);
@@ -868,26 +1102,62 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Vertical Scroll (Wheel) navigation
-  // We use a small threshold and a cooldown to prevent aggressive trackpad rapid-firing.
+  // Uses non-passive so we can manually scroll page content OR turn the page.
   let wheelTimeout: number | null = null;
+
+  // Normalize delta across deltaMode values (pixel / line / page)
+  function normalizeDelta(raw: number, mode: number): number {
+    if (mode === 1) return raw * 20;  // LINE
+    if (mode === 2) return raw * 400; // PAGE
+    return raw;                        // PIXEL
+  }
+
   document.addEventListener('wheel', (e) => {
-    // Only react to significant vertical scrolls, ignore horizontal swipes or tiny nudges
-    if (Math.abs(e.deltaY) > 20) {
+    const deltaX = normalizeDelta(e.deltaX, e.deltaMode);
+    const deltaY = normalizeDelta(e.deltaY, e.deltaMode);
+
+    // --- Horizontal scroll: page turn ---
+    // When the horizontal component is dominant (trackpad swipe left/right)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
+      e.preventDefault();
       if (wheelTimeout === null) {
-        if (e.deltaY > 0) {
-          turnNext();
-        } else {
-          turnPrev();
+        if (deltaX > 0) turnNext();
+        else turnPrev();
+        wheelTimeout = window.setTimeout(() => { wheelTimeout = null; }, 850);
+      }
+      return;
+    }
+
+    // --- Vertical scroll ---
+    if (Math.abs(deltaY) < 3) return; // ignore micro nudges
+
+    // Check if the cursor is over a scrollable page-content element
+    const pageContent = (e.target as HTMLElement | null)?.closest('.page-content') as HTMLElement | null;
+    if (pageContent) {
+      const style = window.getComputedStyle(pageContent);
+      const isLocked = style.overflowY === 'hidden';
+      
+      if (!isLocked && pageContent.scrollHeight > pageContent.clientHeight + 2) {
+        const atBottom = pageContent.scrollTop + pageContent.clientHeight >= pageContent.scrollHeight - 2;
+        const atTop = pageContent.scrollTop <= 2;
+        // If there's room to scroll, do it and stop page turning
+        if ((deltaY > 0 && !atBottom) || (deltaY < 0 && !atTop)) {
+          e.preventDefault();
+          pageContent.scrollBy({ top: deltaY, behavior: 'auto' });
+          return;
         }
-        
-        // Cooldown period matching or slightly less than the animation duration
-        // to prevent stacking flipped pages rapidly.
-        wheelTimeout = window.setTimeout(() => {
-          wheelTimeout = null;
-        }, 900);
       }
     }
-  }, { passive: true }); // passive: true for smooth scrolling if we dont preventDefault
+
+    // Otherwise turn the page via cooldown
+    if (Math.abs(deltaY) < 30) return;
+    if (wheelTimeout === null) {
+      if (deltaY > 0) turnNext();
+      else turnPrev();
+      wheelTimeout = window.setTimeout(() => { wheelTimeout = null; }, 850);
+    }
+  }, { passive: false });
+
 
   updateButtons();
 
