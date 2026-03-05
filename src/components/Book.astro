@@ -398,6 +398,13 @@ const { chapters = [] } = Astro.props as Props;
   box-shadow: 0 5px 25px rgba(0,0,0,0.4);
   border-radius: 11px; /* Half of width */
   transform-style: preserve-3d;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+/* Hide spine when book is open */
+.book[data-open-status="open"] .binding {
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* Spine Side Faces for Volume */

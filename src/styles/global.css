@@ -1,0 +1,246 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* No scrolling allowed */
+  background: #121212; /* Behind the book context */
+}
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Figma Link Cards Interactive Styles */
+.figma-card {
+  display: block;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  border: 1px solid #eaeaea;
+  text-decoration: none !important;
+  color: inherit;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  cursor: pointer;
+}
+.figma-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  border-color: #d0d0d0;
+}
+.figma-card:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.1s ease;
+}
+.figma-card h3 {
+  margin-top: 0;
+  font-size: 1.1rem;
+  color: #111;
+}
+.figma-card p {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: #555;
+}
+.figma-card:hover .pdf-attachment {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+/* ========= Timeline ========= */
+.timeline {
+  position: relative;
+  padding-left: 1.8rem;
+  margin-top: 0.5rem;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  bottom: 6px;
+  width: 1.5px;
+  background: linear-gradient(to bottom, #ccc, #e0d8cc);
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 1.6rem;
+}
+.tl-item:last-child { margin-bottom: 0; }
+.tl-dot {
+  position: absolute;
+  left: -1.8rem;
+  top: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #bfb8ad);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--accent, #bfb8ad);
+  transition: background 0.2s;
+}
+.tl-year {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent, #999);
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+.tl-grade {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-left: 0.4em;
+  font-size: 0.85em;
+}
+.tl-role {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.3rem;
+  line-height: 1.4;
+}
+.tl-desc {
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: #666;
+  margin: 0;
+  max-width: 55ch;
+}
+/* NDA Note block */
+.nda-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  background: rgba(245, 158, 11, 0.07);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+.nda-icon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.nda-main {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: #333;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* 特定のページで親のスクロールを無効化するためのハック */
+:global(.page-content:has(.lock-scroll)) {
+  overflow-y: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+:global(.page-content:has(.lock-scroll) .scroll-fade-top),
+:global(.page-content:has(.lock-scroll) .scroll-fade-bottom) {
+  display: none !important;
+}
+.lock-scroll {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.lock-scroll .works-section-title {
+  margin: 0.8rem 0 0.4rem 0;
+  font-size: 0.65rem;
+}
+.lock-scroll .work-card-title {
+  font-size: 1rem;
+}
+
+/* 作品目次グリッド */
+.works-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  margin-top: 0.5rem;
+  flex: 1;
+  min-height: 0;
+}
+.works-section-title {
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #999;
+  margin: 1.2rem 0 0.6rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 0.4rem;
+}
+.work-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #222;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  text-decoration: none;
+  color: white;
+  aspect-ratio: 16/9;
+}
+.work-card-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.work-card:hover .work-card-bg {
+  transform: scale(1.1);
+}
+.work-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  transition: background 0.3s;
+}
+.work-card:hover .work-card-overlay {
+  background: rgba(0,0,0,0.6);
+}
+.work-card-title {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 300;
+  margin: 0;
+  color: #fff;
+  line-height: 1.3;
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+/* VI Page - For visual-focused content with minimal margins */
+.vi-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Specifically target images within .vi-page to override .standard-page defaults */
+.vi-page img {
+  width: auto;
+  height: auto; /* Natural scale to allow flex vertical centering */
+  max-width: 100%;
+  max-height: 100% !important; /* Ignore 50vh from standard-page */
+  object-fit: contain !important; /* Ignore cover from standard-page */
+  display: block;
+  border-radius: 4px;
+  margin: 0 !important; /* Reset all margins to ensure flex centering works */
+  box-shadow: none !important; /* Ignore shadows from standard-page */
+}
