@@ -1,36 +1,37 @@
 ---
-import Book from '../components/Book.astro';
-import { Image } from 'astro:assets';
+import Book from "../components/Book.astro";
+import { Image } from "astro:assets";
 
 // Original image imports (Astro optimizes these automatically)
-import case1Img from '../assets/case1.jpg';
-import coverImg from '../assets/cover-new.jpg';
+import case1Img from "../assets/case1.jpg";
+import coverImg from "../assets/cover-new.jpg";
 
 // Page components
-import CoverFront from '../components/pages/CoverFront.astro';
-import CoverInside from '../components/pages/CoverInside.astro';
-import Profile from '../components/pages/Profile.astro';
-import Works from '../components/pages/Works.astro';
-import WorksIndex from '../components/pages/WorksIndex.astro';
-import FigmaLinks from '../components/pages/FigmaLinks.astro';
-import KumonikationVisual from '../components/pages/KumonikationVisual.astro';
-import KumonikationText from '../components/pages/KumonikationText.astro';
-import CyberAgentVisual from '../components/pages/CyberAgentVisual.astro';
-import CyberAgentText from '../components/pages/CyberAgentText.astro';
-import FigmaLinks from '../components/pages/FigmaLinks.astro';
-import Contact from '../components/pages/Contact.astro';
-import CoverBack from '../components/pages/CoverBack.astro';
+import CoverFront from "../components/pages/CoverFront.astro";
+import CoverInside from "../components/pages/CoverInside.astro";
+import Profile from "../components/pages/Profile.astro";
+import Works from "../components/pages/Works.astro";
+import WorksIndex from "../components/pages/WorksIndex.astro";
+import KumonikationVisual from "../components/pages/KumonikationVisual.astro";
+import KumonikationText from "../components/pages/KumonikationText.astro";
+import CyberAgentVisual from "../components/pages/CyberAgentVisual.astro";
+import CyberAgentText from "../components/pages/CyberAgentText.astro";
+import ShibuyaGarbageVisual from "../components/pages/ShibuyaGarbageVisual.astro";
+import ShibuyaGarbageText from "../components/pages/ShibuyaGarbageText.astro";
+import TechjamVisual from "../components/pages/TechjamVisual.astro";
+import TechjamText from "../components/pages/TechjamText.astro";
+import VRShootingVisual from "../components/pages/VRShootingVisual.astro";
+import VRShootingText from "../components/pages/VRShootingText.astro";
+import ThankYou from "../components/pages/ThankYou.astro";
+import CoverBack from "../components/pages/CoverBack.astro";
 
 // Styles
-import '../styles/global.css';
+import "../styles/global.css";
 
 const chapters = [
-  { leaf: 0, title: '表紙' },
-  { leaf: 1, title: '経歴' },
-  { leaf: 2, title: '作品' },
-  { leaf: 3, title: '制作詳細' },
-  { leaf: 4, title: 'CAインターン' },
-  { leaf: 5, title: 'Contact' }
+  { leaf: 0, title: "表紙" },
+  { leaf: 1, title: "経歴" },
+  { leaf: 2, title: "作品" },
 ];
 ---
 
@@ -41,12 +42,15 @@ const chapters = [
     <title>My Portfolio Book</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <!-- Load required fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+JP:wght@400;700&family=Micro+5&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+JP:wght@400;700&family=Micro+5&display=swap"
+      rel="stylesheet"
+    />
+
     <script>
-      import '../scripts/cover-animation.ts';
+      import "../scripts/cover-animation.ts";
     </script>
   </head>
 
@@ -59,12 +63,17 @@ const chapters = [
         <Profile slot="page-1" />
         <Works slot="page-2" />
         <WorksIndex slot="page-3" />
-        <KumonikationVisual slot="page-4" />
-        <KumonikationText slot="page-5" />
-        <CyberAgentVisual slot="page-6" />
-        <CyberAgentText slot="page-7" />
-        <FigmaLinks slot="page-8" />
-        <Contact slot="page-9" />
+        <CyberAgentVisual slot="page-4" />
+        <CyberAgentText slot="page-5" />
+        <KumonikationVisual slot="page-6" />
+        <KumonikationText slot="page-7" />
+        <ShibuyaGarbageVisual slot="page-8" />
+        <ShibuyaGarbageText slot="page-9" />
+        <TechjamText slot="page-10" />
+        <TechjamVisual slot="page-11" />
+        <VRShootingVisual slot="page-12" />
+        <VRShootingText slot="page-13" />
+        <ThankYou slot="page-14" />
         <CoverBack slot="cover-back" />
       </Book>
     </main>

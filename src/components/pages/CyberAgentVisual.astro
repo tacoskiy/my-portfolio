@@ -1,5 +1,88 @@
 ---
+
 ---
+
 <div class="vi-page">
-  <img src="/images/works/cyberagent_visual.png" alt="CyberAgent UI/UX Design Visual" />
+  <div class="vi-column">
+    <div class="vi-item">
+      <div class="section-label">UI Design</div>
+      <div class="vi-container shadow-sm">
+        <img
+          src="/images/works/asoberu-ui.png"
+          alt="Asoberu UI Design"
+          class="vi-img"
+        />
+      </div>
+    </div>
+    <div class="vi-item">
+      <div class="section-label">Figma Workflow</div>
+      <div class="vi-container shadow-lg">
+        <img
+          src="/images/works/asoberu-figma.png"
+          alt="Asoberu Figma Overview"
+          class="vi-img"
+        />
+      </div>
+    </div>
+  </div>
 </div>
+
+<style>
+  .vi-page {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+
+  .vi-column {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .vi-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .vi-container {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .shadow-sm {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  .shadow-lg {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .vi-img {
+    width: 100%;
+    height: auto;
+    max-height: 35vh;
+    object-fit: contain;
+    display: block;
+  }
+</style>

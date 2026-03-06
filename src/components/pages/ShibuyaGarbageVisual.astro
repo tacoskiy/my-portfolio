@@ -1,0 +1,164 @@
+---
+
+---
+
+<div class="vi-page">
+  <div class="pdf-section">
+    <div class="section-label">
+      発表時資料 <span class="sub">Internship Pitch</span>
+    </div>
+    <div class="vi-container shadow-sm">
+      <a
+        href="/images/works/bto.pdf"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="external-link-btn"
+        aria-label="別タブで開く"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+          ></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+      <iframe
+        id="pdf-initial"
+        src="/images/works/bto.pdf#toolbar=0&navpanes=0"
+        class="vi-pdf"
+        title="Shibuya Garbage Initial PDF"></iframe>
+    </div>
+  </div>
+
+  <div class="pdf-section">
+    <div class="section-label">
+      ブラッシュアップ <span class="sub">Post-Internship</span>
+    </div>
+    <div class="vi-container shadow-lg">
+      <a
+        href="/images/works/01%20-%20Vision%202.pdf"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="external-link-btn"
+        aria-label="別タブで開く"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+          ></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+      <iframe
+        id="pdf-refined"
+        src="/images/works/01%20-%20Vision%202.pdf#toolbar=0&navpanes=0"
+        class="vi-pdf"
+        title="Shibuya Garbage Refined PDF"></iframe>
+    </div>
+  </div>
+</div>
+
+<style>
+  .vi-page {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+
+  .pdf-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-label .sub {
+    font-weight: 400;
+    color: #ccc;
+    font-size: 0.7rem;
+  }
+
+  .vi-container {
+    position: relative;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8f9fa;
+  }
+
+  .shadow-sm {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  .shadow-lg {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .external-link-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #111;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+
+  .external-link-btn:hover {
+    background: #0076ff;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 118, 255, 0.3);
+  }
+
+  .vi-pdf {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border: none;
+    display: block;
+    background-color: #fff;
+  }
+</style>
