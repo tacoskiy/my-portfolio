@@ -1,0 +1,82 @@
+---
+/**
+ * src/components/pages/VantanVisual.astro
+ * Visual showcase for Vantan Poster project.
+ */
+---
+
+<div class="vi-page">
+  <div class="poster-series-grid">
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/cover-front.png" alt="Front Cover" />
+    </div>
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/3F.png" alt="3F Guide" />
+    </div>
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/4F.png" alt="4F Guide" />
+    </div>
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/5F.png" alt="5F Guide" />
+    </div>
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/6F.png" alt="6F Guide" />
+    </div>
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/7F.png" alt="7F Guide" />
+    </div>
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/cover-back.png" alt="Back Cover" />
+    </div>
+    <div class="vi-container shadow-sm">
+      <img src="/images/works/vantan-pos/white.png" alt="White Graphic" />
+    </div>
+  </div>
+</div>
+
+<style>
+  .vi-page {
+    width: 100%;
+    height: 100%;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+  }
+
+  .poster-series-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, auto);
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 620px;
+  }
+
+  .vi-container {
+    background: #fdfdfd;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    border: 1px solid #f0f0f0;
+  }
+
+  .vi-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+  }
+
+  .shadow-sm {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  @media (max-width: 768px) {
+    .poster-series-grid {
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(4, auto);
+    }
+  }
+</style>
