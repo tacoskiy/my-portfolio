@@ -1,54 +1,46 @@
 ---
-
+import TextPage from "../Book/TextPage.astro";
 ---
 
-<div class="standard-page">
-  <span class="status-tag done">チームのリード/フロントエンド/デザイン</span>
-  <h2>クモニケーション</h2>
-
-  <p>
-    VANTANの卒業制作展に向けて、「クモニケーション」という雲の写真とともに一言をその場に残すことができるアプリの開発を、チームリーダーとして遂行しました。
-  </p>
-
-  <p>
-    UI /
-    UXデザインはもちろん、フロントエンドの実装、API設計や使用技術の選定など、チーム間で意見を共有しながらも常に一つの芯を持った開発を完了することができました。
-  </p>
-  <p>
-    Azure AI Vision
-    を用いて、雲の画像を解析し、個人を特定できうる画像や、雲ではない画像には警告を表示する機能を実装しています。
-  </p>
-
-  <div class="deployment-info">
+<TextPage
+  statusLabel="チームのリード/フロントエンド/デザイン"
+  statusClass="done"
+  title="クモニケーション"
+  concept="雲の写真と一言を共有し、同じ空の下でのゆるやかな繋がりを形成する匿名コミュニティアプリ。"
+  role="チームリーダーとして、コンセプトの創案、UI/UXデザインからフロントエンド実装、API設計までを統括。"
+  approach="Azure AI Visionを活用して不適切/個人の特定につながる写真を自動フィルタリングし、安全性の高いユーザー投稿環境を構築。24時間で消える投稿設計により位置情報と写真の共有というリスクの高い行動を高い匿名性で安全に。"
+  output="実際にデプロイ済みで、QRコードから実際に投稿を試すことが可能なWebアプリケーション。"
+>
+  <div slot="extra" class="deployment-info">
     <div class="qr-container">
       <img src="/images/works/cloudication-qr.svg" alt="Kumonikation QR Code" />
     </div>
     <div class="deploy-text">
       <p><strong>アプリを試してみる</strong></p>
       <p>
-        このアプリは既にデプロイ済みです。QRコードからアクセスして、実際に雲の投稿を試していただくことが可能です。
+        既にデプロイ済みです。QRコードからアクセスして、実際の投稿体験を試していただくことが可能です。
       </p>
     </div>
   </div>
-</div>
+</TextPage>
 
 <style>
   .deployment-info {
-    margin-top: 2.5rem;
+    margin-top: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    padding: 1.2rem;
+    gap: 1.2rem;
+    padding: 1rem;
     background: #fbfbfb;
     border: 1px dashed #ddd;
     border-radius: 12px;
   }
   .qr-container {
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
     flex-shrink: 0;
     background: #fff;
-    padding: 5px;
+    padding: 4px;
     border: 1px solid #eee;
     border-radius: 8px;
   }
@@ -61,14 +53,14 @@
   }
   .deploy-text p {
     margin: 0;
-    font-size: 0.85rem;
-    line-height: 1.6;
+    font-size: 0.8rem;
+    line-height: 1.5;
     color: #444;
   }
   .deploy-text p strong {
     display: block;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: #111;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.2rem;
   }
 </style>

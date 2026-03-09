@@ -235,12 +235,27 @@ body {
 /* Specifically target images within .vi-page to override .standard-page defaults */
 .vi-page img {
   width: auto;
-  height: auto; /* Natural scale to allow flex vertical centering */
+  height: auto;
   max-width: 100%;
-  max-height: 100% !important; /* Ignore 50vh from standard-page */
-  object-fit: contain !important; /* Ignore cover from standard-page */
+  max-height: 100% !important;
+  object-fit: contain !important;
   display: block;
   border-radius: 4px;
-  margin: 0 !important; /* Reset all margins to ensure flex centering works */
-  box-shadow: none !important; /* Ignore shadows from standard-page */
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+.vi-page img,
+.asset-preview img,
+.vi-container img,
+.project-extra img:not(.figma-icon img, .qr-container img) {
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.vi-page img:hover,
+.asset-preview img:hover,
+.vi-container img:hover,
+.project-extra img:not(.figma-icon img, .qr-container img):hover {
+  transform: scale(1.02);
 }

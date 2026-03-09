@@ -1,0 +1,614 @@
+---
+/**
+ * src/components/book/BookLayout.astro
+ * The master 3D book container.
+ * It manages the scene, navigation, physics, and state.
+ */
+
+export interface Chapter {
+  leaf: number;
+  title: string;
+}
+
+export interface Props {
+  chapters?: Chapter[];
+}
+
+const { chapters = [] } = Astro.props;
+
+// Determine available slots. We support "cover-front", "cover-inside", "page-1", "page-2", ... "cover-back".
+const slotNames = Object.keys(Astro.slots);
+const pageSlots = slotNames.filter((name) => name.startsWith("page-")).length;
+
+// Organize into leaves (physical sheets of paper)
+// Each leaf has a front and a back.
+const leaves = [];
+
+// Cover Leaf
+leaves.push({
+  isCover: true,
+  front: "cover-front",
+  back: "cover-inside",
+});
+
+// Calculate internal content leaves
+for (let i = 1; i <= pageSlots; i += 2) {
+  leaves.push({
+    isCover: false,
+    front: `page-${i}`,
+    back: `page-${i + 1}`,
+  });
+}
+
+// Back Cover Leaf
+leaves.push({
+  isCover: true,
+  front: "blank", // inside of back cover
+  back: "cover-back",
+});
+
+const totalLeaves = leaves.length;
+---
+
+<div class="book-scene" id="main-book-scene">
+  <!-- 3D Transform Hub: The 'book-object-tilt' is for mouse parallax -->
+  <div id="book-parallax-hub" class="physics-hub">
+    <div class="book-viewport-container">
+      <div
+        class="book-structure"
+        id="book-structure"
+        data-total-leaves={totalLeaves}
+      >
+        <div class="spine-binding"></div>
+
+        {
+          leaves.map((leaf, index) => {
+            const zDepth = totalLeaves - index;
+            return (
+              <div
+                class={`leaf-layer ${leaf.isCover ? "hardcover" : ""}`}
+                data-index={index}
+                data-z-right={zDepth}
+                data-z-left={index}
+                style={`z-index: ${zDepth}; transform: rotateY(0deg) translateZ(${-index * 0.5}px);`}
+              >
+                {/* PAGE FRONT (Right-hand side) */}
+                <div class="page-surface front">
+                  {leaf.isCover && <div class="texture-overlay" />}
+                  <div class="face-content">
+                    {leaf.front !== "blank" && <slot name={leaf.front} />}
+                    {leaf.front === "blank" && <div class="empty-page" />}
+                  </div>
+                  <div class="layer-shadow" />
+                </div>
+
+                {/* PAGE BACK (Left-hand side) */}
+                <div class="page-surface back">
+                  {leaf.isCover && <div class="texture-overlay" />}
+                  <div class="face-content">
+                    {leaf.back !== "blank" && <slot name={leaf.back} />}
+                    {leaf.back === "blank" && <div class="empty-page" />}
+                  </div>
+                  <div class="layer-shadow" />
+                </div>
+              </div>
+            );
+          })
+        }
+      </div>
+    </div>
+  </div>
+
+  {/* Global UI Overlays */}
+  <div class="nav-controls" id="nav-controls">
+    <button id="book-prev" aria-label="Previous Page" class="nav-button">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"><path d="M15 18l-6-6 6-6"></path></svg
+      >
+    </button>
+    <button id="book-next" aria-label="Next Page" class="nav-button">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"><path d="M9 18l6-6-6-6"></path></svg
+      >
+    </button>
+  </div>
+
+  {
+    chapters.length > 0 && (
+      <div class="chapter-index">
+        {chapters.map((chap) => (
+          <button class="chapter-item" data-goto={chap.leaf}>
+            {chap.title}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  <div id="fade-curtain" class="fade-curtain"></div>
+</div>
+
+<style>
+  :root {
+    --book-width: calc(100vw - 40px);
+    --book-height: calc(100vh - 80px);
+    --flip-duration: 0.9s;
+    --page-bg: #fdfaf5;
+    --text-main: #111111;
+    --text-muted: #666666;
+  }
+
+  /* Scene Environment */
+  .book-scene {
+    background: #0a0a0b;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    perspective: 2500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Inter", "Noto Sans JP", sans-serif;
+  }
+
+  .physics-hub {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+    will-change: transform;
+    pointer-events: none;
+  }
+
+  .book-viewport-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+  }
+
+  .book-structure {
+    position: relative;
+    width: var(--book-width);
+    height: var(--book-height);
+    transform-style: preserve-3d;
+    /* Start on front cover */
+    transform: translateX(-25%);
+    transition: transform var(--flip-duration) cubic-bezier(0.5, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  /* Spine & Binding */
+  .spine-binding {
+    position: absolute;
+    top: -10px;
+    bottom: -10px;
+    left: 50%;
+    width: 20px;
+    transform: translateX(-50%) translateZ(-10px);
+    background: #1a1a1a;
+    background-image: linear-gradient(to right, #000 0%, #333 50%, #000 100%);
+    border-radius: 10px;
+    z-index: -10;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Functional Leaf Structure */
+  .leaf-layer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform var(--flip-duration) cubic-bezier(0.5, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .leaf-layer.is-flipping {
+    will-change: transform;
+  }
+
+  /* Surface Area */
+  .page-surface {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    background: var(--page-bg);
+    overflow: hidden;
+    pointer-events: auto; /* Re-enable clicks on the page surfaces */
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.05);
+  }
+
+  .page-surface.front {
+    transform: rotateY(0deg);
+    border-radius: 0 4px 4px 0;
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .page-surface.back {
+    transform: rotateY(180deg);
+    border-radius: 4px 0 0 4px;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .face-content {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Hardcover Specific Overhang */
+  .leaf-layer.hardcover .page-surface {
+    top: -8px;
+    bottom: -8px;
+    height: calc(100% + 16px);
+    width: calc(100% + 8px);
+    background: #1e1e1e;
+    color: white;
+  }
+
+  .leaf-layer.hardcover .page-surface.front {
+    border-radius: 2px 8px 8px 2px;
+    box-shadow:
+      inset 0 0 40px rgba(0, 0, 0, 0.3),
+      4px 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .leaf-layer.hardcover .page-surface.back {
+    border-radius: 8px 2px 2px 8px;
+    box-shadow:
+      inset 0 0 40px rgba(0, 0, 0, 0.3),
+      -4px 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Shadows for realism */
+  .layer-shadow {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .is-flipping .layer-shadow {
+    opacity: 1;
+  }
+
+  /* Texture for hardcover */
+  .texture-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: url("/textures/book-tex.svg");
+    background-size: cover;
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  /* Navigation UI */
+  .nav-controls {
+    position: fixed;
+    top: 50%;
+    left: 40px;
+    right: 40px;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10000;
+  }
+
+  .nav-button {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+
+  .nav-button:disabled {
+    opacity: 0.1;
+    cursor: not-allowed;
+  }
+
+  .chapter-index {
+    position: fixed;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.75rem;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 0.5rem;
+    border-radius: 40px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .chapter-item {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+
+  .chapter-item.active {
+    background: white;
+    color: black;
+  }
+
+  .fade-curtain {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 99999;
+    transition: opacity 0.4s ease;
+  }
+
+  .fade-curtain.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (max-width: 768px) {
+    :root {
+      --book-width: calc(100vw - 32px);
+      --book-height: calc(100vh - 120px);
+    }
+
+    .book-structure {
+      transform: translateY(-25%);
+    }
+
+    .leaf-layer {
+      width: 100%;
+      height: 50%;
+      top: auto;
+      bottom: 0;
+      transform-origin: top center;
+    }
+
+    .page-surface.back {
+      transform: rotateX(-180deg);
+    }
+
+    .face-content {
+      /* Compensate for vertical inversion on mobile back page */
+      &.back-face-fix {
+        transform: rotate(180deg);
+      }
+    }
+
+    .chapter-index {
+      bottom: 2rem;
+      padding: 0.25rem;
+      max-width: 90vw;
+      overflow-x: auto;
+    }
+  }
+</style>
+
+<script>
+  // BookController: Centralizing state and navigation
+  class BookController {
+    scene: HTMLElement;
+    book: HTMLElement;
+    leaves: HTMLElement[];
+    btnPrev: HTMLButtonElement;
+    btnNext: HTMLButtonElement;
+    chapters: HTMLElement[];
+    fade: HTMLElement;
+
+    currentPage = 0;
+    totalLeaves = 0;
+    isAnimating = false;
+
+    constructor() {
+      this.scene = document.getElementById("main-book-scene")!;
+      this.book = document.getElementById("book-structure")!;
+      this.leaves = Array.from(
+        document.querySelectorAll(".leaf-layer"),
+      ) as HTMLElement[];
+      this.btnPrev = document.getElementById("book-prev") as HTMLButtonElement;
+      this.btnNext = document.getElementById("book-next") as HTMLButtonElement;
+      this.chapters = Array.from(
+        document.querySelectorAll(".chapter-item"),
+      ) as HTMLElement[];
+      this.fade = document.getElementById("fade-curtain")!;
+
+      this.totalLeaves = this.leaves.length;
+
+      this.init();
+    }
+
+    init() {
+      this.btnNext.onclick = () => this.flipNext();
+      this.btnPrev.onclick = () => this.flipPrev();
+
+      this.chapters.forEach((btn) => {
+        btn.onclick = () => {
+          const target = parseInt(btn.dataset.goto!);
+          this.jumpTo(target);
+        };
+      });
+
+      // Keyboard support
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") this.flipNext();
+        if (e.key === "ArrowLeft") this.flipPrev();
+      });
+
+      this.updateUI();
+    }
+
+    isMobile() {
+      return window.innerWidth <= 768;
+    }
+
+    updateUI() {
+      this.btnPrev.disabled = this.currentPage === 0;
+      this.btnNext.disabled = this.currentPage === this.totalLeaves;
+
+      this.chapters.forEach((btn) => {
+        const target = parseInt(btn.dataset.goto!);
+        btn.classList.toggle("active", target === this.currentPage);
+      });
+
+      // Layer state management: optimize visibility and pointer events
+      this.leaves.forEach((leaf, i) => {
+        const dist = Math.abs(i - this.currentPage);
+        leaf.style.visibility = dist <= 2 ? "visible" : "hidden";
+        leaf.style.pointerEvents =
+          i === this.currentPage || i === this.currentPage - 1
+            ? "auto"
+            : "none";
+      });
+
+      // Apply overall book offset
+      const mobile = this.isMobile();
+      if (this.currentPage === 0) {
+        this.book.style.transform = mobile
+          ? "translateY(-25%)"
+          : "translateX(-25%)";
+      } else if (this.currentPage === this.totalLeaves) {
+        this.book.style.transform = mobile
+          ? "translateY(25%)"
+          : "translateX(25%)";
+      } else {
+        this.book.style.transform = mobile
+          ? "translateY(0%)"
+          : "translateX(0%)";
+      }
+    }
+
+    flipNext() {
+      if (this.currentPage >= this.totalLeaves || this.isAnimating) return;
+      this.isAnimating = true;
+
+      const leaf = this.leaves[this.currentPage];
+      const mobile = this.isMobile();
+
+      leaf.classList.add("is-flipping");
+      leaf.style.zIndex = (1000 - this.currentPage).toString();
+
+      const rotation = mobile ? "rotateX(180deg)" : "rotateY(-180deg)";
+      const zOffset = -this.currentPage * 10;
+      leaf.style.transform = `${rotation} translateZ(${zOffset}px)`;
+
+      this.currentPage++;
+      this.updateUI();
+
+      setTimeout(() => {
+        leaf.classList.remove("is-flipping");
+        this.isAnimating = false;
+      }, 900);
+    }
+
+    flipPrev() {
+      if (this.currentPage <= 0 || this.isAnimating) return;
+      this.isAnimating = true;
+
+      this.currentPage--;
+      const leaf = this.leaves[this.currentPage];
+      const mobile = this.isMobile();
+
+      leaf.classList.add("is-flipping");
+      leaf.style.zIndex = (
+        1000 +
+        (this.totalLeaves - this.currentPage)
+      ).toString();
+
+      const rotation = mobile ? "rotateX(0deg)" : "rotateY(0deg)";
+      const zOffset = -this.currentPage * 10;
+      leaf.style.transform = `${rotation} translateZ(${zOffset}px)`;
+
+      this.updateUI();
+
+      setTimeout(() => {
+        leaf.classList.remove("is-flipping");
+        this.isAnimating = false;
+      }, 900);
+    }
+
+    jumpTo(target: number) {
+      if (target === this.currentPage || this.isAnimating) return;
+      this.isAnimating = true;
+
+      this.fade.classList.add("active");
+
+      setTimeout(() => {
+        // Instant update behind curtain
+        this.book.style.transition = "none";
+        this.leaves.forEach((l) => (l.style.transition = "none"));
+
+        const mobile = this.isMobile();
+        this.leaves.forEach((leaf, i) => {
+          const leafIndex = parseInt(leaf.dataset.index!);
+          if (i < target) {
+            const rotation = mobile ? "rotateX(180deg)" : "rotateY(-180deg)";
+            leaf.style.transform = `${rotation} translateZ(${-leafIndex * 10}px)`;
+          } else {
+            const rotation = mobile ? "rotateX(0deg)" : "rotateY(0deg)";
+            leaf.style.transform = `${rotation} translateZ(${-leafIndex * 10}px)`;
+          }
+        });
+
+        this.currentPage = target;
+        this.updateUI();
+
+        // Restore transitions
+        requestAnimationFrame(() => {
+          this.book.style.transition = "";
+          this.leaves.forEach((l) => (l.style.transition = ""));
+          this.fade.classList.remove("active");
+          this.isAnimating = false;
+        });
+      }, 400);
+    }
+  }
+
+  // Initialize on page load
+  window.addEventListener("load", () => {
+    new BookController();
+  });
+</script>

@@ -1,0 +1,84 @@
+---
+/**
+ * src/components/Book/Section.astro
+ * A reusable container for labeled sections within a text page.
+ */
+interface Props {
+  label: string;
+}
+const { label } = Astro.props;
+
+// Modern Transparent Palette (Background and Text pair)
+const colorMap: Record<string, { bg: string; text: string }> = {
+  concept: { bg: "rgba(74, 144, 226, 0.1)", text: "#4a90e2" },
+  role: { bg: "rgba(165, 94, 234, 0.1)", text: "#a55eea" },
+  responsibility: { bg: "rgba(165, 94, 234, 0.1)", text: "#a55eea" },
+  scope: { bg: "rgba(165, 94, 234, 0.1)", text: "#a55eea" },
+  action: { bg: "rgba(165, 94, 234, 0.1)", text: "#a55eea" },
+  approach: { bg: "rgba(235, 59, 90, 0.1)", text: "#eb3b5a" },
+  output: { bg: "rgba(32, 191, 107, 0.1)", text: "#20bf6b" },
+};
+
+const key = label.toLowerCase().trim();
+const colors = colorMap[key] || {
+  bg: "rgba(153, 153, 153, 0.1)",
+  text: "#999",
+};
+---
+
+<div class="project-section">
+  <div class="section-label-container">
+    <span
+      class="section-label-chip"
+      style={`background-color: ${colors.bg}; color: ${colors.text};`}
+    >
+      {label}
+    </span>
+  </div>
+  <div class="section-content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  :global(.project-section) {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  :global(.section-label-container) {
+    margin: 0 0 0.75rem 0;
+  }
+
+  :global(.section-label-chip) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 10px;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    line-height: 1;
+    font-family: "Inter", sans-serif !important;
+    box-shadow: none;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  :global(.section-content) {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-main, #333);
+    padding-left: 0.2rem;
+    width: 100%;
+    font-weight: 400;
+  }
+
+  :global(.section-content p) {
+    margin: 0 !important;
+    opacity: 0.9;
+  }
+</style>

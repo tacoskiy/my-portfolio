@@ -1185,9 +1185,11 @@ const { chapters = [] } = Astro.props as Props;
       const target = e.target as HTMLElement | null;
       if (
         target &&
-        target.closest('a, button, [role="button"], input, textarea, select')
+        target.closest(
+          'a, button, [role="button"], input, textarea, select, img, .pdf-click-area, iframe',
+        )
       ) {
-        return; // Do nothing — browser follows the link / activates the button
+        return; // Do nothing — browser follows the link / activates the button / viewer opens
       }
 
       // Ignore text selection drags
@@ -1207,8 +1209,10 @@ const { chapters = [] } = Astro.props as Props;
     });
 
     // Vertical Scroll (Wheel) navigation
-    // Uses non-passive so we can manually scroll page content OR turn the page.
+    // --- Wheel Navigation with Grace Period ---
     let wheelTimeout: number | null = null;
+    let edgeReachedTime = 0;
+    let edgeTarget = ""; // "top" or "bottom"
 
     // Optimized delta normalization
     function normalizeDelta(raw: number, mode: number): number {
@@ -1223,56 +1227,91 @@ const { chapters = [] } = Astro.props as Props;
         const deltaX = normalizeDelta(e.deltaX, e.deltaMode);
         const deltaY = normalizeDelta(e.deltaY, e.deltaMode);
 
-        // --- Horizontal scroll: page turn ---
-        // When the horizontal component is dominant (trackpad swipe left/right)
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
+        // --- Horizontal scroll: page turn (Immediate but with timeout) ---
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
           e.preventDefault();
           if (wheelTimeout === null) {
             if (deltaX > 0) turnNext();
             else turnPrev();
             wheelTimeout = window.setTimeout(() => {
               wheelTimeout = null;
-            }, 850);
+            }, 1000);
           }
           return;
         }
 
         // --- Vertical scroll ---
-        if (Math.abs(deltaY) < 3) return; // ignore micro nudges
+        if (Math.abs(deltaY) < 3) return;
 
-        // Check if the cursor is over a scrollable page-content element
         const pageContent = (e.target as HTMLElement | null)?.closest(
           ".page-content",
         ) as HTMLElement | null;
+
         if (pageContent) {
           const style = window.getComputedStyle(pageContent);
           const isLocked = style.overflowY === "hidden";
-
-          if (
+          const isScrollable =
             !isLocked &&
-            pageContent.scrollHeight > pageContent.clientHeight + 2
-          ) {
+            pageContent.scrollHeight > pageContent.clientHeight + 2;
+
+          if (isScrollable) {
             const atBottom =
               pageContent.scrollTop + pageContent.clientHeight >=
               pageContent.scrollHeight - 2;
             const atTop = pageContent.scrollTop <= 2;
-            // If there's room to scroll, do it and stop page turning
+
+            // 1. If we can still scroll within the page
             if ((deltaY > 0 && !atBottom) || (deltaY < 0 && !atTop)) {
               e.preventDefault();
               pageContent.scrollBy({ top: deltaY, behavior: "auto" });
+              // Reset edge state because we are moving
+              edgeTarget = "";
               return;
             }
+
+            // 2. We are at a boundary (atTop or atBottom)
+            if ((deltaY > 0 && atBottom) || (deltaY < 0 && atTop)) {
+              e.preventDefault();
+              const currentEdge = deltaY > 0 ? "bottom" : "top";
+
+              // Start grace period timer if this is a new edge hit
+              if (edgeTarget !== currentEdge) {
+                edgeTarget = currentEdge;
+                edgeReachedTime = Date.now();
+                return;
+              }
+
+              // Check if 500ms has passed since hitting this edge
+              const elapsed = Date.now() - edgeReachedTime;
+              if (elapsed < 500) {
+                return; // Still in grace period
+              }
+              // If elapsed > 500ms, fall through to page turn logic
+            }
+          } else {
+            // Not a scrollable page - we still want a small nudge protection
+            // so starting to scroll doesn't instantly flip.
+            e.preventDefault();
+            const currentEdge = deltaY > 0 ? "bottom" : "top";
+            if (edgeTarget !== currentEdge) {
+              edgeTarget = currentEdge;
+              edgeReachedTime = Date.now();
+              return;
+            }
+            if (Date.now() - edgeReachedTime < 400) return;
           }
         }
 
-        // Otherwise turn the page via cooldown
-        if (Math.abs(deltaY) < 30) return;
+        // --- Page Turn ---
+        if (Math.abs(deltaY) < 40) return;
         if (wheelTimeout === null) {
           if (deltaY > 0) turnNext();
           else turnPrev();
           wheelTimeout = window.setTimeout(() => {
             wheelTimeout = null;
-          }, 850);
+          }, 1100);
+          // After a flip, reset edge stats
+          edgeTarget = "";
         }
       },
       { passive: false },

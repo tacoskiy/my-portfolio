@@ -1,68 +1,86 @@
 ---
-
+import TextPage from "../Book/TextPage.astro";
 ---
 
-<div class="standard-page">
-  <span class="status-tag done" style="width: fit-content;"
-    >コンセプトの創案から実際に運用する際の構想まで</span
-  >
-  <h2>CA インターン課題：<br />渋谷のゴミ捨て問題の解決</h2>
-
-  <p>
-    「指定ステーションにゴミを捨てるとクーポンがもらえる」という仕組みを通じた、渋谷の清掃と店舗送客を両立する施策を提案しました。
-  </p>
-
-  <h3 class="section-title">発表時の指摘・不足点</h3>
-  <ul class="standard-list">
-    <li>「利益構造」の具体性が弱く、店舗側のメリットが不透明</li>
-    <li>ゴミを捨てた後に、ユーザーが実際にその店舗へ向かう動機が薄い</li>
-  </ul>
-
-  <h3 class="section-title">ブラッシュアップ案</h3>
-  <ul class="standard-list">
-    <li>
-      <strong>既存インフラの活用:</strong>
-      2026年改正条例に基づく「店舗へのゴミ箱設置義務」を逆手に取り、既存の動線に無理なく組み込むUXを設計。
-    </li>
-    <li>
-      <strong>利益構造の再検討:</strong>
-      店舗と顧客の両者が、単なるボランティアではなく実利を持って継続できるビジネスモデルへアップデート。
-    </li>
-  </ul>
-</div>
+<TextPage
+  statusLabel="コンセプト創案・ビジネス構想"
+  statusClass="done"
+  title="渋谷のゴミ捨て解決施策 - CAインターン課題"
+  concept="インセンティブ設計を通じて渋谷のポイ捨て問題を解決し、同時に地域店舗への送客を実現するUX施策。"
+  role="コンセプト立案、ビジネスモデルの策定、および投資対効果を考慮した提案資料の作成。"
+  approach="店舗へのゴミ箱設置義務化を逆手に取り、回収とクーポン発行を紐付けた店舗・顧客双方に利がある循環モデル。"
+  output="サービスコンセプト提案、CAインターンでの発表とフィードバックの受け取り。それを元にした収益構造までの具体的運用プラン、および課題に対するブラッシュアップ案。"
+>
+  <div slot="extra" class="insight-container">
+    <div class="insight-card">
+      <div class="insight-icon">🎯</div>
+      <div class="insight-content">
+        <h4>利益構造：清掃費を「集客費」へ</h4>
+        <p>
+          2026年のゴミ箱設置義務化を、単なる店舗の負担ではなく「販促チャンス」へと転換。店舗が自発的に参加したくなる収益フローを構築。
+        </p>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🔄</div>
+      <div class="insight-content">
+        <h4>体験設計：ゴミ捨てから「来店」へ</h4>
+        <p>
+          「ゴミを捨てる」という行為を「クーポン獲得」という報酬に変えることで、ボランティアに頼らない自律的な清掃サイクルを実現。
+        </p>
+      </div>
+    </div>
+  </div>
+</TextPage>
 
 <style>
-  .standard-page {
+  .insight-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.8rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
   }
 
-  h2 {
-    margin-bottom: 0.5rem;
-    line-height: 1.3;
+  .insight-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.2rem;
+    padding: 1.25rem;
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s ease;
   }
 
-  .section-title {
-    font-size: 1rem;
-    font-weight: 700;
-    margin: 1.5rem 0 0.5rem 0;
-    color: #333;
+  .insight-card:hover {
+    transform: translateY(-2px);
+    border-color: #e0e0e0;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
   }
 
-  .standard-list {
-    margin: 0;
-    padding-left: 1.5rem;
-    color: var(--text-muted);
+  .insight-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    padding-top: 0.1rem;
+    flex-shrink: 0;
   }
 
-  .standard-list li {
-    margin-bottom: 0.8rem;
-    line-height: 1.6;
+  .insight-content h4 {
+    margin: 0 0 0.4rem 0;
     font-size: 0.95rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: 0.02em;
   }
 
-  strong {
-    color: #111;
+  .insight-content p {
+    margin: 0;
+    font-size: 0.82rem !important;
+    line-height: 1.6 !important;
+    color: #555 !important;
+    font-weight: 400 !important;
+    text-align: left !important;
   }
 </style>

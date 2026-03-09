@@ -1,0 +1,107 @@
+---
+import Section from "./Section.astro";
+
+export interface Props {
+  title: string;
+  concept: string;
+  role: string;
+  approach: string;
+  output: string;
+  statusLabel?: string;
+  statusClass?: string;
+}
+
+const {
+  title,
+  concept,
+  role,
+  approach,
+  output,
+  statusLabel,
+  statusClass = "done",
+} = Astro.props;
+---
+
+<div class="project-structured-page">
+  <div class="header-content">
+    {
+      statusLabel && (
+        <span class={`status-badge-chip ${statusClass}`}>{statusLabel}</span>
+      )
+    }
+    <h2 class="project-title-large">{title}</h2>
+    <div class="project-extra-container">
+      <slot name="extra" />
+    </div>
+  </div>
+
+  <div class="project-sections-grid">
+    <Section label="Concept">
+      <p>{concept}</p>
+    </Section>
+
+    <Section label="Action">
+      <p>{role}</p>
+    </Section>
+
+    <Section label="Approach">
+      <p>{approach}</p>
+    </Section>
+
+    <Section label="Output">
+      <p>{output}</p>
+    </Section>
+  </div>
+</div>
+
+<style>
+  :global(.project-structured-page) {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2rem;
+  }
+
+  :global(.header-content) {
+    margin-bottom: 3rem;
+  }
+
+  :global(.status-badge-chip) {
+    display: inline-block;
+    padding: 0.4rem 1.25rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+
+  :global(.status-badge-chip.done) {
+    background: #f0fdf4 !important;
+    color: #16a34a !important;
+    border: 1px solid #dcfce7;
+  }
+
+  :global(.project-title-large) {
+    font-size: 2.2rem;
+    margin: 0 0 1.25rem 0;
+    color: #111;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    font-weight: 800;
+    font-family: "Inter", "Noto Sans JP", sans-serif !important;
+  }
+
+  :global(.project-extra-container) {
+    margin: 0;
+    padding: 0;
+  }
+
+  :global(.project-sections-grid) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+</style>

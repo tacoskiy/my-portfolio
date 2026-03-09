@@ -24,6 +24,7 @@ import VRShootingVisual from "../components/pages/VRShootingVisual.astro";
 import VRShootingText from "../components/pages/VRShootingText.astro";
 import ThankYou from "../components/pages/ThankYou.astro";
 import CoverBack from "../components/pages/CoverBack.astro";
+import ImageViewer from "../components/common/ImageViewer.astro";
 
 // Styles
 import "../styles/global.css";
@@ -69,13 +70,14 @@ const chapters = [
         <KumonikationText slot="page-7" />
         <ShibuyaGarbageVisual slot="page-8" />
         <ShibuyaGarbageText slot="page-9" />
-        <TechjamText slot="page-10" />
-        <TechjamVisual slot="page-11" />
+        <TechjamVisual slot="page-10" />
+        <TechjamText slot="page-11" />
         <VRShootingVisual slot="page-12" />
         <VRShootingText slot="page-13" />
         <ThankYou slot="page-14" />
         <CoverBack slot="cover-back" />
       </Book>
     </main>
+    <ImageViewer />
   </body>
 </html>

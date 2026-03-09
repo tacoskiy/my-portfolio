@@ -1,139 +1,66 @@
 ---
-
+import TextPage from "../Book/TextPage.astro";
 ---
 
-<div class="standard-page">
-  <span class="status-tag done">3D MODELING / DESIGN</span>
-  <h2>3D WORK</h2>
-
-  <p>
-    TGS（東京ゲームショウ）出展のVRシューティングゲームにて、主役機のモデリングおよび武器セットのデザイン・モデリングを担当しました。
-  </p>
-
-  <div class="text-gallery">
-    <div class="gallery-item large">
-      <div class="gallery-img-wrapper">
-        <img
-          src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.58.47.png"
-          alt="3D Work 05"
-        />
-      </div>
-      <span class="img-caption">Weapon / Equipment Details</span>
+<TextPage
+  statusLabel="3D Modeling / Design"
+  statusClass="done"
+  title="3D WORK (VR Shooting)"
+  concept="東京ゲームショウ出展のVRシューティングゲームに向けた、プレイヤーの没入感を高めるメカニックデザイン。"
+  role="主役機のモデリング、複数の武器セットのモデリングとデザインを担当。"
+  approach="VR環境での視認性と軽量性を重視し、機体全体は約25000ポリゴンで構成。"
+  output="実機ゲーム内に実装された、主要機体を含む3Dモデル（FBX）およびテクスチャアセット。"
+>
+  <div slot="extra" class="asset-preview">
+    <div class="preview-item">
+      <img
+        src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.58.47.png"
+        alt="Weapon Preview"
+      />
     </div>
-
-    <div class="gallery-row">
-      <div class="gallery-item">
-        <div class="gallery-img-wrapper">
-          <img
-            src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.59.01.png"
-            alt="3D Work 06"
-          />
-        </div>
-      </div>
-      <div class="gallery-item">
-        <div class="gallery-img-wrapper">
-          <img
-            src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.58.16.png"
-            alt="3D Work 07"
-          />
-        </div>
-      </div>
-      <div class="gallery-item">
-        <div class="gallery-img-wrapper">
-          <img
-            src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.57.21.png"
-            alt="3D Work 08"
-          />
-        </div>
-      </div>
+    <div class="preview-grid">
+      <img
+        src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.59.01.png"
+        alt="Detail 1"
+      />
+      <img
+        src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.58.16.png"
+        alt="Detail 2"
+      />
+      <img
+        src="/images/works/3D/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-06%2015.57.21.png"
+        alt="Detail 3"
+      />
     </div>
   </div>
-</div>
+</TextPage>
 
 <style>
-  .status-tag {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    background: #e3ffe3;
-    color: #20d120;
-    font-size: 0.75rem;
-    font-weight: 700;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  h2 {
-    font-size: 2.4rem;
-    margin-bottom: 1rem;
-    color: #111;
-    font-family: "Inter", "Noto Sans JP", sans-serif;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  p {
-    margin-bottom: 2rem;
-    line-height: 1.8;
-    color: #444;
-    font-size: 1rem;
-    letter-spacing: 0.02em;
-  }
-
-  .text-gallery {
+  .asset-preview {
+    margin-top: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    margin-top: 1rem;
+    gap: 0.75rem;
   }
-
-  .gallery-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .gallery-img-wrapper {
+  .preview-item img {
     width: 100%;
     border-radius: 8px;
-    overflow: hidden;
-    background: #f8f9fa;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    margin: 0 !important;
+    box-shadow: none !important;
   }
-
-  .gallery-img-wrapper img {
-    width: 100%;
-    height: auto;
-    display: block;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .gallery-img-wrapper:hover img {
-    transform: scale(1.05);
-  }
-
-  .large .gallery-img-wrapper {
-    max-height: 250px;
-  }
-
-  .gallery-row {
+  .preview-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.8rem;
+    gap: 0.5rem;
   }
-
-  .gallery-row .gallery-img-wrapper {
-    height: 100px;
-  }
-
-  .img-caption {
-    font-size: 0.7rem;
-    color: #999;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+  .preview-grid img {
+    width: 100%;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #eee;
+    margin: 0 !important;
+    box-shadow: none !important;
   }
 </style>

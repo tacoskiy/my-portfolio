@@ -7,13 +7,36 @@
     <div class="section-label">
       発表時資料 <span class="sub">Internship Pitch</span>
     </div>
-    <div class="vi-container shadow-sm">
+    <div
+      class="vi-container shadow-sm pdf-click-area"
+      data-pdf-src="/images/works/bto.pdf"
+    >
+      <div class="pdf-overlay">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><polyline points="15 3 21 3 21 9"></polyline><polyline
+            points="9 21 3 21 3 15"></polyline><line
+            x1="21"
+            y1="3"
+            x2="14"
+            y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg
+        >
+        <span>Click to Zoom</span>
+      </div>
       <a
         href="/images/works/bto.pdf"
         target="_blank"
         rel="noopener noreferrer"
         class="external-link-btn"
         aria-label="別タブで開く"
+        onclick="event.stopPropagation();"
       >
         <svg
           width="16"
@@ -43,13 +66,36 @@
     <div class="section-label">
       ブラッシュアップ <span class="sub">Post-Internship</span>
     </div>
-    <div class="vi-container shadow-lg">
+    <div
+      class="vi-container shadow-lg pdf-click-area"
+      data-pdf-src="/images/works/01%20-%20Vision%202.pdf"
+    >
+      <div class="pdf-overlay">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><polyline points="15 3 21 3 21 9"></polyline><polyline
+            points="9 21 3 21 3 15"></polyline><line
+            x1="21"
+            y1="3"
+            x2="14"
+            y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg
+        >
+        <span>Click to Zoom</span>
+      </div>
       <a
         href="/images/works/01%20-%20Vision%202.pdf"
         target="_blank"
         rel="noopener noreferrer"
         class="external-link-btn"
         aria-label="別タブで開く"
+        onclick="event.stopPropagation();"
       >
         <svg
           width="16"
@@ -153,6 +199,34 @@
     box-shadow: 0 4px 12px rgba(0, 118, 255, 0.3);
   }
 
+  .pdf-click-area {
+    cursor: zoom-in;
+  }
+
+  .pdf-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+  }
+
+  .pdf-click-area:hover .pdf-overlay {
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+
   .vi-pdf {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -160,5 +234,6 @@
     border: none;
     display: block;
     background-color: #fff;
+    pointer-events: none; /* Let clicks pass to parent container */
   }
 </style>

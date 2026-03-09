@@ -1,0 +1,213 @@
+---
+/**
+ * src/components/common/ImageViewer.astro
+ * A global component to show images in full screen when clicked.
+ */
+---
+
+<div id="image-viewer" class="image-viewer" aria-hidden="true" role="dialog">
+  <div class="viewer-overlay"></div>
+  <div class="viewer-content">
+    <!-- Image View -->
+    <img id="viewer-img" src="" alt="Fullscreen view" style="display: none;" />
+
+    <!-- PDF View -->
+    <iframe
+      id="viewer-pdf"
+      src=""
+      style="display: none; border: none; background: white;"
+      title="PDF Viewer"></iframe>
+  </div>
+</div>
+
+<style>
+  .image-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 10000; /* Higher than book components */
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .image-viewer.active {
+    display: flex;
+    opacity: 1;
+  }
+
+  .viewer-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    cursor: zoom-out;
+  }
+
+  .viewer-content {
+    position: relative;
+    width: auto;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .image-viewer.active .viewer-content {
+    transform: scale(1) translateY(0);
+  }
+
+  /* Image styling */
+  .viewer-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+  }
+
+  /* PDF styling */
+  #viewer-pdf {
+    width: 80vw;
+    height: 85vh;
+    border-radius: 8px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+  }
+
+  .viewer-close {
+    position: absolute;
+    top: -40px;
+    right: 0px;
+    background: white;
+    border: none;
+    color: #000;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    pointer-events: auto;
+    z-index: 10;
+  }
+
+  .viewer-close:hover {
+    transform: rotate(90deg) scale(1.1);
+    background: #f0f0f0;
+  }
+
+  @media (max-width: 768px) {
+    #viewer-pdf {
+      width: 95vw;
+      height: 75vh;
+    }
+    .viewer-close {
+      top: -55px;
+      right: 5px;
+    }
+  }
+</style>
+
+<script>
+  const viewer = document.getElementById("image-viewer");
+  const viewerImg = document.getElementById("viewer-img") as HTMLImageElement;
+  const viewerPdf = document.getElementById("viewer-pdf") as HTMLIFrameElement;
+  const closeBtn = document.getElementById("viewer-close");
+
+  function openViewer(src: string, isPdf = false) {
+    if (!viewer || !viewerImg || !viewerPdf) return;
+
+    // Reset views
+    viewerImg.style.display = "none";
+    viewerPdf.style.display = "none";
+    viewerImg.src = "";
+    viewerPdf.src = "";
+
+    if (isPdf) {
+      viewerPdf.src = src;
+      viewerPdf.style.display = "block";
+    } else {
+      viewerImg.src = src;
+      viewerImg.style.display = "block";
+    }
+
+    viewer.style.display = "flex";
+    viewer.setAttribute("aria-hidden", "false");
+
+    // Force reflow
+    void viewer.offsetHeight;
+    viewer.classList.add("active");
+  }
+
+  function closeViewer() {
+    if (!viewer) return;
+    viewer.classList.remove("active");
+    viewer.setAttribute("aria-hidden", "true");
+
+    setTimeout(() => {
+      viewer.style.display = "none";
+      if (viewerImg) viewerImg.src = "";
+      if (viewerPdf) viewerPdf.src = "";
+    }, 400);
+  }
+
+  // --- Click Logic ---
+  document.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+
+    // 1. Image Click
+    if (target.tagName === "IMG") {
+      const isProjectImg =
+        target.closest(".page-content") ||
+        target.closest(".vi-page") ||
+        target.closest(".asset-preview") ||
+        target.closest(".vi-container") ||
+        target.closest(".project-extra");
+      const isExcluded =
+        target.closest(".figma-icon") ||
+        target.closest(".qr-container") ||
+        target.closest(".status-tag") ||
+        target.classList.contains("profile-photo");
+
+      if (isProjectImg && !isExcluded) {
+        const src = (target as HTMLImageElement).src;
+        if (src) openViewer(src, false);
+      }
+    }
+
+    // 2. PDF Container Click
+    const pdfContainer = target.closest(".pdf-click-area");
+    if (pdfContainer) {
+      const pdfSrc = pdfContainer.getAttribute("data-pdf-src");
+      if (pdfSrc) {
+        // Use standard PDF toolbar in full screen
+        openViewer(pdfSrc, true);
+      }
+    }
+  });
+
+  closeBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeViewer();
+  });
+
+  viewer
+    ?.querySelector(".viewer-overlay")
+    ?.addEventListener("click", closeViewer);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && viewer?.classList.contains("active")) {
+      closeViewer();
+    }
+  });
+</script>
