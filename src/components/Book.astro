@@ -1208,17 +1208,19 @@ const { chapters = [] } = Astro.props as Props;
       if (e.key === "ArrowLeft") turnPrev();
     });
 
-    // Vertical Scroll (Wheel) navigation
-    // --- Wheel Navigation with Grace Period ---
+    // --- [Enhanced Scroll & Swipe Orchestration] ---
     let wheelTimeout: number | null = null;
+    let scrollAccumulatorX = 0;
+    let scrollResetTimer: number | null = null;
+
+    // Edge-hit grace period for vertical scroll
     let edgeReachedTime = 0;
     let edgeTarget = ""; // "top" or "bottom"
 
-    // Optimized delta normalization
     function normalizeDelta(raw: number, mode: number): number {
-      if (mode === 1) return raw * 18;
-      if (mode === 2) return raw * 350;
-      return raw;
+      if (mode === 1) return raw * 18; // lines
+      if (mode === 2) return raw * 350; // pages
+      return raw; // pixels
     }
 
     document.addEventListener(
@@ -1227,20 +1229,48 @@ const { chapters = [] } = Astro.props as Props;
         const deltaX = normalizeDelta(e.deltaX, e.deltaMode);
         const deltaY = normalizeDelta(e.deltaY, e.deltaMode);
 
-        // --- Horizontal scroll: page turn (Immediate but with timeout) ---
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+        // --- 1. Horizontal Scroll (Swipe intent) ---
+        // Use a 1.5x bias towards X to ensure we don't accidentally turn pages while scrolling vertically
+        if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
           e.preventDefault();
-          if (wheelTimeout === null) {
-            if (deltaX > 0) turnNext();
+
+          // If already flipping, clear the accumulator and ignore
+          if (wheelTimeout !== null || isAnimating) {
+            scrollAccumulatorX = 0;
+            return;
+          }
+
+          // Reset accumulator if user reverses direction
+          if (
+            scrollAccumulatorX !== 0 &&
+            Math.sign(deltaX) !== Math.sign(scrollAccumulatorX)
+          ) {
+            scrollAccumulatorX = 0;
+          }
+
+          scrollAccumulatorX += deltaX;
+
+          // Reset accumulator if the user stops scrolling for a moment
+          if (scrollResetTimer) clearTimeout(scrollResetTimer);
+          scrollResetTimer = window.setTimeout(() => {
+            scrollAccumulatorX = 0;
+          }, 150);
+
+          // Trigger on sufficient accumulated motion (100 is a safe deliberate threshold)
+          if (Math.abs(scrollAccumulatorX) > 100) {
+            if (scrollAccumulatorX > 0) turnNext();
             else turnPrev();
+
+            scrollAccumulatorX = 0;
+            // Longer cooldown (1200ms) to consume all inertia/momentum from a single swipe
             wheelTimeout = window.setTimeout(() => {
               wheelTimeout = null;
-            }, 1000);
+            }, 1200);
           }
           return;
         }
 
-        // --- Vertical scroll ---
+        // --- 2. Vertical Scroll ---
         if (Math.abs(deltaY) < 3) return;
 
         const pageContent = (e.target as HTMLElement | null)?.closest(
@@ -1260,37 +1290,29 @@ const { chapters = [] } = Astro.props as Props;
               pageContent.scrollHeight - 2;
             const atTop = pageContent.scrollTop <= 2;
 
-            // 1. If we can still scroll within the page
+            // Page internal scrolling
             if ((deltaY > 0 && !atBottom) || (deltaY < 0 && !atTop)) {
               e.preventDefault();
               pageContent.scrollBy({ top: deltaY, behavior: "auto" });
-              // Reset edge state because we are moving
-              edgeTarget = "";
+              edgeTarget = ""; // reset edge
               return;
             }
 
-            // 2. We are at a boundary (atTop or atBottom)
+            // Boundary logic: if we are at top/bottom and keep scrolling, turn page after grace period
             if ((deltaY > 0 && atBottom) || (deltaY < 0 && atTop)) {
               e.preventDefault();
               const currentEdge = deltaY > 0 ? "bottom" : "top";
 
-              // Start grace period timer if this is a new edge hit
               if (edgeTarget !== currentEdge) {
                 edgeTarget = currentEdge;
                 edgeReachedTime = Date.now();
                 return;
               }
 
-              // Check if 500ms has passed since hitting this edge
-              const elapsed = Date.now() - edgeReachedTime;
-              if (elapsed < 500) {
-                return; // Still in grace period
-              }
-              // If elapsed > 500ms, fall through to page turn logic
+              if (Date.now() - edgeReachedTime < 450) return;
             }
           } else {
-            // Not a scrollable page - we still want a small nudge protection
-            // so starting to scroll doesn't instantly flip.
+            // Not a scrollable page: small protection buffer
             e.preventDefault();
             const currentEdge = deltaY > 0 ? "bottom" : "top";
             if (edgeTarget !== currentEdge) {
@@ -1298,23 +1320,53 @@ const { chapters = [] } = Astro.props as Props;
               edgeReachedTime = Date.now();
               return;
             }
-            if (Date.now() - edgeReachedTime < 400) return;
+            if (Date.now() - edgeReachedTime < 350) return;
           }
         }
 
-        // --- Page Turn ---
+        // --- 3. Final Page Turn (Vertical fallback or edge-hit trigger) ---
         if (Math.abs(deltaY) < 40) return;
-        if (wheelTimeout === null) {
+        if (wheelTimeout === null && !isAnimating) {
           if (deltaY > 0) turnNext();
           else turnPrev();
           wheelTimeout = window.setTimeout(() => {
             wheelTimeout = null;
-          }, 1100);
-          // After a flip, reset edge stats
+          }, 1000);
           edgeTarget = "";
         }
       },
       { passive: false },
+    );
+
+    // --- [Touch Swiping Support] ---
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    document.addEventListener(
+      "touchstart",
+      (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      },
+      { passive: true },
+    );
+
+    document.addEventListener(
+      "touchend",
+      (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+
+        const diffX = touchStartX - touchEndX;
+        const diffY = touchStartY - touchEndY;
+
+        // If horizontal movement is dominant and meets threshold
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
+          if (diffX > 0) turnNext();
+          else turnPrev();
+        }
+      },
+      { passive: true },
     );
 
     updateButtons();
